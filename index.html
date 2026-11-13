@@ -401,7 +401,7 @@ footer p { margin: 0; max-width: 60ch; }
           </select>
         </label>
       </div>
-      <p class="tts-note" id="ttsNote" hidden>Voice playback works in Chrome or Edge on claude.ai.</p>
+      <p class="tts-note" id="ttsNote" hidden>Voice playback isn’t available in this browser.</p>
     </div>
   </div>
 </div></header>
@@ -546,6 +546,15 @@ footer p { margin: 0; max-width: 60ch; }
 
 <script>
 // ---------- Reviews: stored in the page's database ----------
+// Reviews shown when the site is hosted outside claude.ai, where the database isn't available.
+const STATIC_REVIEWS = [
+  { id: "s6", cat: "flower", ep: "Ep. 03", name: "Sample Strain: Gelato", note: "Dense, sticky nugs with a sweet, creamy finish. Hits heavy, best after dinner.", specs: [{k:"Type",v:"Indica-lean"},{k:"THC",v:"24%"},{k:"Price",v:"$45/⅛"}], bams: 4 },
+  { id: "s5", cat: "glass", ep: "Ep. 03", name: "Sample: Silicone Travel Pipe", note: "Basically indestructible and easy to clean. Gets hot near the bowl.", specs: [{k:"Material",v:"Silicone"},{k:"Size",v:"4 in"},{k:"Price",v:"$18"}], bams: 3 },
+  { id: "s4", cat: "vapes", ep: "Ep. 02", name: "Sample: Live Resin Cart", note: "Big flavor on the first pulls, then it fades. Hardware clogged once.", specs: [{k:"Size",v:"1g"},{k:"Type",v:"Live resin"},{k:"Price",v:"$45"}], bams: 2 },
+  { id: "s3", cat: "edibles", ep: "Ep. 02", name: "Sample: Mango Gummies", note: "Tastes like candy, not weed. Kicked in at about 50 minutes and dosing was consistent.", specs: [{k:"Dose",v:"10mg"},{k:"Onset",v:"~50 min"},{k:"Price",v:"$20/10"}], bams: 5 },
+  { id: "s2", cat: "glass", ep: "Ep. 01", name: "Sample: 12\" Beaker Bong", note: "Thick 7mm glass and a solid downstem. Heavy, stable, a little plain on looks.", specs: [{k:"Material",v:"7mm glass"},{k:"Size",v:"12 in"},{k:"Price",v:"$90"}], bams: 3 },
+  { id: "s1", cat: "flower", ep: "Ep. 01", name: "Sample Strain: Blue Dream", note: "Berry nose, smooth burn, clear head. A daytime hybrid that doesn't knock you flat.", specs: [{k:"Type",v:"Hybrid"},{k:"THC",v:"21%"},{k:"Price",v:"$35/⅛"}], bams: 4 },
+];
 const CATS = ["flower","edibles","vapes","glass","accessories"];
 const SPEC_LABELS = {
   flower: ["Type","THC","Price"],
@@ -786,6 +795,10 @@ paintRate(); paintSpecLabels();
   const user = window.claude ? await window.claude.use("user") : null;
   if (!db) {
     clearTimeout(loadTimer); delete statusEl.dataset.busy;
+    if (!window.claude) {
+      // Hosted outside claude.ai (e.g. GitHub Pages): show the reviews saved in this file.
+      reviews = STATIC_REVIEWS.slice(); statusEl.textContent = ""; render(); return;
+    }
     statusEl.textContent = "Sign in to claude.ai to see the reviews."; return;
   }
   let w = null;
@@ -987,6 +1000,7 @@ function setProgress(ms) {
 }
 
 play.addEventListener("click", async () => {
+  if (!tts && !window.claude && "speechSynthesis" in window) { browserSpeak(); return; }
   if (!tts) { ttsNote.hidden = false; return; }
   if (speaking) { try { await tts.stop(); } catch (_) {} return; }
   doneBefore = 0; setProgress(0); setUI(true);
@@ -1000,10 +1014,30 @@ play.addEventListener("click", async () => {
   }
   setUI(false);
 });
+// Fallback when hosted outside claude.ai: the visitor's browser voice, Canadian English if it has one.
+function browserSpeak() {
+  const synth = window.speechSynthesis;
+  if (speaking) { synth.cancel(); setUI(false); return; }
+  const voices = synth.getVoices();
+  const pick = voices.find(v => /^en[-_]CA/i.test(v.lang)) || voices.find(v => /^en[-_]US/i.test(v.lang)) || voices.find(v => /^en/i.test(v.lang));
+  doneBefore = 0; setProgress(0); setUI(true);
+  const start = Date.now();
+  const tick = setInterval(() => setProgress(Date.now() - start), 100);
+  INTRO.forEach((l, i) => {
+    const u = new SpeechSynthesisUtterance(l.text.replace(/\.\.\./g, ","));
+    if (pick) u.voice = pick;
+    u.lang = pick ? pick.lang : "en-CA";
+    u.rate = l.rate;
+    if (i === INTRO.length - 1) u.onend = u.onerror = () => { clearInterval(tick); doneBefore = EST_MS.a + EST_MS.b; setProgress(0); setUI(false); };
+    synth.speak(u);
+  });
+}
+if ("speechSynthesis" in window) { try { speechSynthesis.getVoices(); } catch (_) {} }
 voiceSel.addEventListener("change", () => { if (speaking && tts) tts.stop().catch(() => {}); });
 
 (async () => {
   tts = window.claude ? await window.claude.use("tts") : null;
+  if (!tts && !window.claude && "speechSynthesis" in window) { voiceSel.closest("label").hidden = true; return; }
   if (!tts) { ttsNote.hidden = false; voiceSel.closest("label").hidden = true; return; }
   tts.onLine(({ id }) => { if (id === "b") doneBefore = EST_MS.a; lineId = id; });
   tts.onPosition(({ ms }) => setProgress(ms));

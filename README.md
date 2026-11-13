@@ -2,6 +2,8 @@
 
 Website for **Bam Bam Reviews**, a podcast reviewing cannabis products: flower, edibles, vapes, glass and accessories. For adults 21+ only.
 
+**Live site:** https://harleyloft47-king.github.io/bam-bam-reviews/
+
 ## What's on the site
 
 - **21+ age check**: month/day/year pickers; remembers verified visitors for 30 days
@@ -11,24 +13,20 @@ Website for **Bam Bam Reviews**, a podcast reviewing cannabis products: flower, 
   - Live: Mon / Wed / Fri, 8–9 PM, plus every other Saturday 7–9 PM (starting Nov 14, 2026)
   - Radio: Tue / Thu / Sun, 9–10 PM, plus the alternate Saturdays 7–9 PM (starting Nov 21, 2026)
   - Times are set in UTC-7 and shown in each visitor's own time zone
-- **Reviews**: cards rated 1–5 on the Bam Scale, filterable by category, with add (including up to 4 photos) and delete for the hosts
+- **Reviews**: cards rated 1–5 on the Bam Scale, filterable by category
 - **Hosts** and **Send us gear** pitch form
 
-## Files
+## Two versions of the same file
 
-| File | What it is |
-| --- | --- |
-| `index.html` | The whole site: markup, styles and script in one file |
-| `mascot.webp` | Header artwork |
+`index.html` runs in two places and adapts to each:
 
-## Hosting notes
+| | claude.ai artifact | GitHub Pages (this repo) |
+| --- | --- | --- |
+| Reviews | Saved in the artifact's database; hosts add, delete and attach photos on the page | Read from the `STATIC_REVIEWS` list in `index.html` |
+| Spoken intro | Claude voice | The visitor's browser voice (Canadian English when available) |
+| Sign-in needed | Yes, for reviews and voice | No |
 
-The site was built to run as a Claude artifact. Two features use platform services that only exist there:
-
-- **Saving reviews** (add/delete) uses the artifact's built-in database, and **review photos** use its file storage.
-- **The spoken intro** uses Claude's text-to-speech voice.
-
-If you host `index.html` somewhere else (GitHub Pages, Netlify, your own domain), the rest of the site works as-is, but those two parts need replacing: reviews with a small backend or a hosted database, and the intro with a recorded audio file.
+To change the reviews on the public site, edit `STATIC_REVIEWS` in `index.html` and push.
 
 ## Still placeholder
 
