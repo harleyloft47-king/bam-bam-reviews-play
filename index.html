@@ -1000,7 +1000,7 @@ function setProgress(ms) {
 }
 
 play.addEventListener("click", async () => {
-  if (!tts && !window.claude && "speechSynthesis" in window) { browserSpeak(); return; }
+  if (!tts && !window.claude) { browserSpeak(); return; }
   if (!tts) { ttsNote.hidden = false; return; }
   if (speaking) { try { await tts.stop(); } catch (_) {} return; }
   doneBefore = 0; setProgress(0); setUI(true);
@@ -1015,11 +1015,48 @@ play.addEventListener("click", async () => {
   setUI(false);
 });
 // Fallback when hosted outside claude.ai: the visitor's browser voice, Canadian English if it has one.
-function browserSpeak() {
+// 1) A recorded intro.mp3 next to index.html plays first, if there is one.
+let introAudio = null, introAudioOk = null; // null = not tried yet
+function playRecorded() {
+  return new Promise(resolve => {
+    if (introAudioOk === false) return resolve(false);
+    if (!introAudio) introAudio = new Audio("intro.mp3");
+    const a = introAudio;
+    let ticker = null;
+    const done = ok => { clearInterval(ticker); setUI(false); if (ok) { prog.style.width = "100%"; } resolve(ok); };
+    a.onended = () => done(true);
+    a.onerror = () => { introAudioOk = false; clearInterval(ticker); setUI(false); resolve(false); };
+    a.currentTime = 0;
+    a.play().then(() => {
+      introAudioOk = true; setUI(true);
+      ticker = setInterval(() => {
+        if (a.duration) { prog.style.width = (a.currentTime / a.duration * 100) + "%"; cur.textContent = "0:" + String(Math.floor(a.currentTime)).padStart(2, "0"); }
+      }, 100);
+    }).catch(() => { introAudioOk = false; resolve(false); });
+  });
+}
+// 2) Otherwise, the most natural-sounding voice the visitor's device has.
+function bestVoice(voices) {
+  const en = voices.filter(v => /^en([-_]|$)/i.test(v.lang));
+  const score = v => {
+    let s = 0;
+    if (/natural|neural|online/i.test(v.name)) s += 50;          // Edge's natural voices
+    if (/premium|enhanced|siri/i.test(v.name)) s += 40;          // Apple's better voices
+    if (/^google/i.test(v.name)) s += 30;                        // Chrome's Google voices
+    if (/^en[-_]CA/i.test(v.lang)) s += 8; else if (/^en[-_]US/i.test(v.lang)) s += 6; else if (/^en[-_]GB/i.test(v.lang)) s += 3;
+    if (/novelty|whisper|zarvox|trinoids|bells|bad news|good news|organ|bubbles|cellos|albert|jester|superstar|wobble|boing/i.test(v.name)) s -= 100;
+    if (/espeak|compact/i.test(v.name)) s -= 30;
+    return s;
+  };
+  return en.sort((a, b) => score(b) - score(a))[0] || null;
+}
+async function browserSpeak() {
   const synth = window.speechSynthesis;
-  if (speaking) { synth.cancel(); setUI(false); return; }
+  if (speaking) { synth && synth.cancel(); if (introAudio) { introAudio.pause(); } setUI(false); return; }
+  if (await playRecorded()) return;
+  if (!synth) { ttsNote.hidden = false; return; }
   const voices = synth.getVoices();
-  const pick = voices.find(v => /^en[-_]CA/i.test(v.lang)) || voices.find(v => /^en[-_]US/i.test(v.lang)) || voices.find(v => /^en/i.test(v.lang));
+  const pick = bestVoice(voices);
   doneBefore = 0; setProgress(0); setUI(true);
   const start = Date.now();
   const tick = setInterval(() => setProgress(Date.now() - start), 100);
@@ -1037,7 +1074,7 @@ voiceSel.addEventListener("change", () => { if (speaking && tts) tts.stop().catc
 
 (async () => {
   tts = window.claude ? await window.claude.use("tts") : null;
-  if (!tts && !window.claude && "speechSynthesis" in window) { voiceSel.closest("label").hidden = true; return; }
+  if (!tts && !window.claude) { voiceSel.closest("label").hidden = true; return; }
   if (!tts) { ttsNote.hidden = false; voiceSel.closest("label").hidden = true; return; }
   tts.onLine(({ id }) => { if (id === "b") doneBefore = EST_MS.a; lineId = id; });
   tts.onPosition(({ ms }) => setProgress(ms));
