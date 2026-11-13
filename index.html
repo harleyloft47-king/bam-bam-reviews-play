@@ -226,6 +226,19 @@ body.gated { overflow: hidden; }
 
 /* Tune in: live + radio */
 .tune { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+/* Live player */
+.player { margin-bottom: 18px; border: 3px solid var(--ink); border-radius: 20px; overflow: hidden; background: var(--ink); box-shadow: 8px 8px 0 var(--ember); }
+.player-bar { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; padding: 12px 16px; color: var(--paper); }
+.player-bar h3 { font-family: var(--font-display); font-weight: 400; font-size: 24px; line-height: 1; }
+.player-bar .badge { border-color: var(--paper); color: var(--paper); }
+.player-bar .badge.on { color: var(--ink); }
+.player-bar a { color: var(--haze); font-size: 14px; }
+.screen { position: relative; aspect-ratio: 16 / 9; background: #0f1512; }
+.screen iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+.screen .idle { position: absolute; inset: 0; display: grid; place-content: center; justify-items: center; gap: 12px; text-align: center; color: var(--paper); padding: 20px; }
+.screen .idle .big { font-family: var(--font-display); font-size: clamp(30px, 6vw, 56px); line-height: 1; color: var(--ember); }
+.screen .idle p { margin: 0; color: #c3cbc4; max-width: 44ch; }
+.screen .idle .btn { background: var(--ember); border-color: var(--ember); color: var(--ink); }
 .chan { border: 2px solid var(--ink); border-radius: 18px; padding: 22px; display: grid; gap: 16px; align-content: start; background: var(--paper-2); }
 .chan.radio { background: var(--paper); }
 .chan-top { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
@@ -440,6 +453,22 @@ footer p { margin: 0; max-width: 60ch; }
     </div>
     <p>Catch us live on camera three nights a week, or on the radio three more. Saturdays alternate: live one week, radio the next.</p>
   </div>
+  <div class="player" id="player">
+    <div class="player-bar">
+      <h3>Watch Bam Bam Live</h3>
+      <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+        <span class="badge" id="playerBadge">Off air</span>
+        <a id="playerOut" href="#" target="_blank" rel="noopener" hidden>Open on <span id="playerPlat">YouTube</span> ↗</a>
+      </div>
+    </div>
+    <div class="screen" id="screen">
+      <div class="idle" id="screenIdle">
+        <span class="big">Stream coming soon</span>
+        <p id="idleText">When we go live, the stream plays right here. Check the schedule below for the next show.</p>
+      </div>
+    </div>
+  </div>
+
   <div class="tune">
     <article class="chan live" id="ch-live">
       <div class="chan-top">
@@ -1020,6 +1049,40 @@ let SHOWS = {
   },
 };
 const DAY = 86400000;
+// ----- live player: embeds the stream from YouTube, Twitch or Kick -----
+let PLAYER = null; // {src, platform, out}
+function embedFor(e) {
+  if (!e || !e.id) return null;
+  const id = String(e.id).trim();
+  if (e.platform === "youtube" && /^UC[A-Za-z0-9_-]{22}$/.test(id))
+    return { src: `https://www.youtube.com/embed/live_stream?channel=${id}&autoplay=1&mute=1`, platform: "YouTube", out: `https://www.youtube.com/channel/${id}/live` };
+  if (e.platform === "youtube-video" && /^[A-Za-z0-9_-]{11}$/.test(id))
+    return { src: `https://www.youtube.com/embed/${id}?autoplay=1&mute=1`, platform: "YouTube", out: `https://www.youtube.com/watch?v=${id}` };
+  if (e.platform === "twitch" && /^[A-Za-z0-9_]{3,25}$/.test(id))
+    return { src: `https://player.twitch.tv/?channel=${id}&parent=${location.hostname}&muted=true`, platform: "Twitch", out: `https://www.twitch.tv/${id}` };
+  if (e.platform === "kick" && /^[A-Za-z0-9_-]{3,30}$/.test(id))
+    return { src: `https://player.kick.com/${id}?muted=true`, platform: "Kick", out: `https://kick.com/${id}` };
+  return null;
+}
+function setupPlayer(embed, chan) {
+  PLAYER = embedFor(embed);
+  const out = document.getElementById("playerOut");
+  const link = PLAYER ? PLAYER.out : chan.link;
+  if (link) { out.href = link; out.hidden = false; document.getElementById("playerPlat").textContent = PLAYER ? PLAYER.platform : chan.platform; }
+  if (!PLAYER) return;
+  const idle = document.getElementById("screenIdle");
+  if (window.claude) { // inside claude.ai, outside players can't load: offer the link instead
+    idle.querySelector("p").textContent = "Watch the stream on " + PLAYER.platform + ".";
+    const a = el("a", "btn", "Open the stream ↗"); a.href = PLAYER.out; a.target = "_blank"; a.rel = "noopener"; idle.append(a);
+    return;
+  }
+  const f = document.createElement("iframe");
+  f.src = PLAYER.src; f.title = "Bam Bam live stream"; f.loading = "lazy";
+  f.allow = "autoplay; fullscreen; picture-in-picture; encrypted-media";
+  f.allowFullscreen = true; f.referrerPolicy = "strict-origin-when-cross-origin";
+  idle.hidden = true;
+  document.getElementById("screen").append(f);
+}
 function applySchedule(sc) {
   const toSlot = s => { const [h, m] = String(s.start || "0:0").split(":").map(Number); return { dow: +s.dow, h: h || 0, m: m || 0, mins: Math.max(5, +s.mins || 60) }; };
   if (typeof sc.utcOffset === "number" && sc.utcOffset >= -12 && sc.utcOffset <= 14) SHOW_OFFSET_H = sc.utcOffset;
@@ -1033,6 +1096,7 @@ function applySchedule(sc) {
       biweekly: alt.enabled === false ? null : { ...toSlot(alt), anchor: [ay, (am || 1) - 1, ad || 1], label: "Saturday special" },
     };
     CHAN[k] = { platform: c.platform || CHAN[k].platform, link: safeUrl(c.link) };
+    if (k === "live") setupPlayer(c.embed, CHAN.live);
     const root = document.getElementById("ch-" + k);
     if (c.title) root.querySelector("[data-title]").textContent = c.title;
     if (c.blurb) root.querySelector("[data-blurb]").textContent = c.blurb;
@@ -1111,7 +1175,9 @@ function paintSchedules() {
       });
     }
   });
-  const anyLive = document.querySelector(".badge.on");
+  const liveOn = document.querySelector("#ch-live [data-badge]").classList.contains("on");
+  const pb = document.getElementById("playerBadge"); pb.textContent = liveOn ? "Live now" : "Off air"; pb.classList.toggle("on", liveOn);
+  const anyLive = document.querySelector(".tune .badge.on");
   document.getElementById("navLive").classList.toggle("on", !!anyLive);
 }
 try {
