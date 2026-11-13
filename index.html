@@ -1,0 +1,877 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bam Bam Reviews</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bagel+Fat+One&family=Familjen+Grotesk:wght@400;500;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  /* Layout idea: a tasting-sheet zine. Loud stacked masthead, then everything scored like a lab card. */
+  --paper: #e6e4d3;
+  --paper-2: #d8d6c0;
+  --ink: #1c2620;
+  --ink-soft: #4b5a50;
+  --ember: #e4572e;
+  --haze: #b7a3d8;
+  --font-display: "Bagel Fat One", "Arial Black", Impact, sans-serif;
+  --font-body: "Familjen Grotesk", "Helvetica Neue", Arial, sans-serif;
+  --font-mono: "DM Mono", ui-monospace, Menlo, monospace;
+  color-scheme: light;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 17px;
+  line-height: 1.55;
+}
+a { color: inherit; }
+a:focus-visible, button:focus-visible { outline: 3px solid var(--ember); outline-offset: 3px; }
+h1, h2, h3 { text-wrap: balance; margin: 0; }
+.wrap { max-width: 1120px; margin: 0 auto; padding: 0 20px; }
+
+.notice {
+  background: var(--ink); color: var(--paper);
+  font-family: var(--font-mono); font-size: 12px; letter-spacing: .08em; text-transform: uppercase;
+}
+.notice .wrap { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; padding-top: 8px; padding-bottom: 8px; }
+
+nav .wrap { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding-top: 18px; padding-bottom: 18px; flex-wrap: wrap; }
+.logo { font-family: var(--font-display); font-size: 22px; text-decoration: none; letter-spacing: .01em; }
+.logo span { color: var(--ember); }
+nav ul { list-style: none; display: flex; gap: 22px; margin: 0; padding: 0; font-weight: 500; flex-wrap: wrap; }
+nav ul a { text-decoration: none; border-bottom: 2px solid transparent; }
+nav ul a:hover { border-color: var(--ember); }
+
+/* Hero */
+.hero { padding: 28px 0 56px; border-bottom: 2px solid var(--ink); }
+.hero-grid { display: grid; grid-template-columns: 1.35fr 1fr; gap: 40px; align-items: center; }
+.mast { font-family: var(--font-display); line-height: .82; font-size: clamp(88px, 17vw, 210px); letter-spacing: -.01em; }
+.mast .b1 { display: block; color: var(--ink); }
+.mast .b2 { display: block; color: var(--ember); margin-left: .42em; -webkit-text-stroke: 0; position: relative; }
+.mast .b2::after {
+  content: "REVIEWS"; position: absolute; left: .08em; bottom: -.62em;
+  font-family: var(--font-mono); font-size: 15px; letter-spacing: .5em; color: var(--ink);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .mast .b1 { animation: slam .5s cubic-bezier(.2,1.6,.4,1) both; }
+  .mast .b2 { animation: slam .5s .32s cubic-bezier(.2,1.6,.4,1) both; }
+}
+@keyframes slam { from { transform: scale(1.35) rotate(-4deg); } to { transform: none; } }
+
+.hero-copy { display: grid; gap: 22px; padding-bottom: 8px; }
+.mascot {
+  width: 100%; max-width: 400px; height: auto; aspect-ratio: 1; object-fit: cover;
+  border: 3px solid var(--ink); border-radius: 22px; box-shadow: 8px 8px 0 var(--ember);
+  transform: rotate(2deg); justify-self: center;
+}
+.hero-copy p.lede { font-size: 22px; line-height: 1.35; margin: 0; max-width: 30ch; }
+.listen { display: flex; gap: 10px; flex-wrap: wrap; }
+.btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 11px 18px; border: 2px solid var(--ink); border-radius: 999px;
+  font-weight: 700; text-decoration: none; background: var(--paper);
+  transition: transform .15s, background .15s;
+}
+.btn:hover { transform: translateY(-2px); background: var(--haze); }
+.btn.primary { background: var(--ink); color: var(--paper); }
+.btn.primary:hover { background: var(--ember); border-color: var(--ember); color: var(--ink); }
+
+/* Latest episode player card */
+.latest { background: var(--ink); color: var(--paper); border-radius: 18px; padding: 20px; display: grid; grid-template-columns: auto 1fr; gap: 16px; align-items: center; }
+.play {
+  width: 58px; height: 58px; border-radius: 50%; border: 0; background: var(--ember); color: var(--ink);
+  cursor: pointer; display: grid; place-items: center;
+}
+.play svg { width: 22px; height: 22px; }
+.latest .meta { font-family: var(--font-mono); font-size: 12px; color: var(--haze); letter-spacing: .06em; text-transform: uppercase; }
+.latest h3 { font-size: 19px; margin: 2px 0 8px; }
+.bar { height: 6px; border-radius: 6px; background: #3a463e; overflow: hidden; }
+.bar i { display: block; height: 100%; width: 0; background: var(--haze); transition: width .3s linear; }
+.time { font-family: var(--font-mono); font-size: 12px; display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-top: 6px; color: #a9b3ab; font-variant-numeric: tabular-nums; }
+.script { margin: 0 0 10px; font-size: 14.5px; line-height: 1.4; color: #c3cbc4; font-style: italic; }
+.script .hot { color: var(--paper); }
+.voice-pick { flex-direction: row; display: flex; align-items: center; gap: 6px; font-size: 11px; color: #a9b3ab; }
+.voice-pick select { font: 12px var(--font-mono); padding: 3px 6px; border-radius: 6px; background: #26322a; color: var(--paper); border: 1.5px solid #3a463e; }
+.tts-note { margin: 8px 0 0; font-family: var(--font-mono); font-size: 11.5px; color: var(--haze); }
+.latest.speaking .play { animation: pulse 1.1s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) { .latest.speaking .play { animation: none; } }
+@keyframes pulse { 50% { box-shadow: 0 0 0 10px rgba(228,87,46,.25); } }
+
+/* Sections */
+section { padding: 64px 0; }
+.sec-head { display: flex; justify-content: space-between; align-items: end; gap: 20px; flex-wrap: wrap; margin-bottom: 28px; }
+.sec-head h2 { font-family: var(--font-display); font-size: clamp(40px, 6vw, 64px); line-height: .95; font-weight: 400; }
+.sec-head p { margin: 0; max-width: 42ch; color: var(--ink-soft); }
+.tag { font-family: var(--font-mono); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; }
+.draft { display: inline-block; background: var(--haze); padding: 3px 8px; border-radius: 4px; }
+
+/* Scale explainer */
+.scale { display: grid; grid-template-columns: repeat(5, 1fr); border: 2px solid var(--ink); border-radius: 14px; overflow: hidden; }
+.scale div { padding: 18px 16px; border-right: 2px solid var(--ink); display: grid; gap: 6px; align-content: start; }
+.scale div:last-child { border-right: 0; background: var(--ember); }
+.scale b { font-family: var(--font-display); font-weight: 400; font-size: 30px; line-height: 1; }
+.scale span { font-size: 15px; color: var(--ink); }
+
+/* Filters + review cards */
+.filters { display: flex; gap: 8px; flex-wrap: wrap; }
+.filters button {
+  font: 500 15px var(--font-body); padding: 8px 14px; border-radius: 999px;
+  border: 2px solid var(--ink); background: transparent; color: var(--ink); cursor: pointer;
+}
+.filters button[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
+.cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 18px; margin-top: 22px; }
+.card {
+  background: var(--paper-2); border: 2px solid var(--ink); border-radius: 14px;
+  padding: 18px; display: grid; gap: 12px; grid-template-rows: auto auto 1fr auto;
+}
+.card[hidden] { display: none; }
+.card-top { display: flex; justify-content: space-between; gap: 10px; align-items: center; }
+.cat { font-family: var(--font-mono); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; border: 1.5px solid var(--ink); padding: 3px 8px; border-radius: 4px; }
+.ep { font-family: var(--font-mono); font-size: 12px; color: var(--ink-soft); }
+.card h3 { font-size: 22px; line-height: 1.15; }
+.card p { margin: 0; font-size: 15.5px; color: var(--ink-soft); }
+.specs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0; border-top: 1.5px dashed var(--ink-soft); padding-top: 10px; font-family: var(--font-mono); font-size: 12px; font-variant-numeric: tabular-nums; }
+.specs dt { color: var(--ink-soft); text-transform: uppercase; letter-spacing: .06em; font-size: 10.5px; }
+.specs dd { margin: 0; font-weight: 500; }
+.bams { display: flex; align-items: center; gap: 4px; }
+.bams i { width: 16px; height: 16px; border-radius: 50%; border: 2px solid var(--ink); display: inline-block; }
+.bams i.on { background: var(--ember); }
+.bams em { font-style: normal; font-family: var(--font-mono); font-size: 12px; margin-left: 6px; }
+
+/* Hosts */
+.hosts { display: grid; grid-template-columns: repeat(2, 1fr); gap: 18px; }
+.host { display: grid; grid-template-columns: 96px 1fr; gap: 18px; align-items: start; border-top: 2px solid var(--ink); padding-top: 18px; }
+.avatar { width: 96px; height: 96px; border-radius: 50%; background: var(--haze); display: grid; place-items: center; font-family: var(--font-display); font-size: 34px; }
+.host:nth-child(2) .avatar { background: var(--ember); }
+.host h3 { font-size: 22px; }
+.host p { margin: 6px 0 0; color: var(--ink-soft); }
+
+/* Submit */
+.submit { background: var(--ink); color: var(--paper); border-radius: 22px; padding: 36px; display: grid; grid-template-columns: 1fr 1fr; gap: 32px; }
+.submit h2 { font-family: var(--font-display); font-weight: 400; font-size: clamp(36px, 5vw, 54px); line-height: .95; }
+.submit p { color: #c3cbc4; }
+form { display: grid; gap: 12px; }
+label { font-family: var(--font-mono); font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--haze); display: grid; gap: 6px; }
+input, select, textarea {
+  font: 16px var(--font-body); padding: 11px 12px; border-radius: 10px; border: 2px solid #3a463e;
+  background: #26322a; color: var(--paper);
+}
+input:focus, select:focus, textarea:focus { outline: none; border-color: var(--ember); }
+.submit .btn { justify-self: start; background: var(--ember); border-color: var(--ember); color: var(--ink); cursor: pointer; font-size: 16px; }
+.thanks { font-family: var(--font-mono); font-size: 13px; color: var(--haze); min-height: 1.4em; margin: 0; }
+
+/* Age gate */
+.gate {
+  position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; padding: 20px;
+  background: rgba(28, 38, 32, .82); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+  overflow-y: auto;
+}
+.gate[hidden] { display: none; }
+body.gated { overflow: hidden; }
+.gate-card {
+  background: var(--paper); color: var(--ink); border: 3px solid var(--ink); border-radius: 22px;
+  box-shadow: 10px 10px 0 var(--ember); width: min(460px, 100%); padding: 28px; display: grid; gap: 16px; text-align: left;
+}
+.gate-card .big { font-family: var(--font-display); font-size: 64px; line-height: .9; color: var(--ember); }
+.gate-card h2 { font-family: var(--font-display); font-weight: 400; font-size: 30px; line-height: 1.05; }
+.gate-card p { margin: 0; color: var(--ink-soft); font-size: 15.5px; }
+.gate-card[hidden] { display: none; }
+.gate-card > * { min-width: 0; }
+.dob { display: grid; grid-template-columns: 1fr 1fr 1.4fr; gap: 10px; }
+.dob label { color: var(--ink-soft); min-width: 0; }
+.dob select {
+  width: 100%; min-width: 0; appearance: none; -webkit-appearance: none; cursor: pointer;
+  background: var(--paper-2) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%231c2620' stroke-width='2'/%3E%3C/svg%3E") no-repeat right 10px center;
+  color: var(--ink); border: 2px solid var(--ink); border-radius: 999px;
+  font: 500 16px var(--font-body); padding: 11px 28px 11px 14px; transition: background-color .15s;
+}
+.dob select:hover { background-color: var(--haze); }
+.dob select:focus { outline: none; border-color: var(--ember); box-shadow: 0 0 0 3px rgba(228,87,46,.3); }
+.dob select.picked { background-color: var(--ink); color: var(--paper); background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%23e6e4d3' stroke-width='2'/%3E%3C/svg%3E"); }
+.gate-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+.gate-actions .btn { cursor: pointer; font-size: 16px; }
+.gate-err { font-family: var(--font-mono); font-size: 13px; color: #b3361a !important; min-height: 1.3em; }
+.gate-fine { font-size: 12.5px !important; }
+.gate-denied .big { color: var(--ink); }
+
+/* Tune in: live + radio */
+.tune { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+.chan { border: 2px solid var(--ink); border-radius: 18px; padding: 22px; display: grid; gap: 16px; align-content: start; background: var(--paper-2); }
+.chan.radio { background: var(--paper); }
+.chan-top { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+.chan h3 { font-family: var(--font-display); font-weight: 400; font-size: 34px; line-height: 1; }
+.chan .sub { margin: 4px 0 0; color: var(--ink-soft); font-size: 15px; }
+.badge { font-family: var(--font-mono); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; padding: 5px 10px; border-radius: 999px; border: 1.5px solid var(--ink); display: inline-flex; align-items: center; gap: 7px; white-space: nowrap; }
+.badge::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--ink-soft); }
+.badge.on { background: var(--ember); border-color: var(--ember); color: var(--ink); font-weight: 500; }
+.badge.on::before { background: var(--ink); }
+@media (prefers-reduced-motion: no-preference) { .badge.on::before { animation: blink 1s steps(2) infinite; } }
+@keyframes blink { 50% { opacity: 0; } }
+.count { background: var(--ink); color: var(--paper); border-radius: 12px; padding: 14px 16px; display: grid; gap: 4px; }
+.count .lbl { font-family: var(--font-mono); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--haze); }
+.count .when { font-weight: 700; font-size: 17px; }
+.count .num { font-family: var(--font-mono); font-size: 30px; font-variant-numeric: tabular-nums; letter-spacing: .02em; }
+.radio .count .lbl { color: var(--haze); }
+.sched { list-style: none; margin: 0; padding: 0; display: grid; }
+.sched li { display: grid; grid-template-columns: 7.5em 1fr auto; gap: 10px; padding: 9px 0; border-top: 1.5px dashed var(--ink-soft); font-size: 15.5px; align-items: baseline; }
+.sched li:last-child { border-bottom: 1.5px dashed var(--ink-soft); }
+.sched .d { font-weight: 700; }
+.sched .t { font-family: var(--font-mono); font-size: 13.5px; font-variant-numeric: tabular-nums; }
+.sched .x { font-family: var(--font-mono); font-size: 11px; color: var(--ink-soft); text-transform: uppercase; letter-spacing: .06em; }
+.sched li.now .d { color: var(--ember); }
+.chan .btn { justify-self: start; }
+.tz { font-family: var(--font-mono); font-size: 12px; color: var(--ink-soft); margin: 0; }
+.nav-live { display: inline-flex; align-items: center; gap: 6px; }
+.nav-live i { width: 8px; height: 8px; border-radius: 50%; background: var(--ember); display: none; }
+.nav-live.on i { display: inline-block; }
+@media (max-width: 860px) { .tune { grid-template-columns: 1fr; } }
+
+/* Owner tools: add panel + delete */
+.add-toggle { background: var(--ember) !important; border-color: var(--ember) !important; color: var(--ink) !important; font-weight: 700 !important; }
+.add-toggle[hidden] { display: none; }
+.add-panel {
+  margin-top: 22px; border: 2px solid var(--ink); border-radius: 18px; background: var(--paper-2);
+  padding: 22px; display: grid; gap: 16px;
+}
+.add-panel[hidden] { display: none; }
+.add-panel h3 { font-family: var(--font-display); font-weight: 400; font-size: 30px; }
+.add-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+.add-grid .wide { grid-column: span 3; }
+.add-grid .two { grid-column: span 2; }
+.add-panel label { color: var(--ink-soft); }
+.add-panel input, .add-panel select, .add-panel textarea {
+  background: var(--paper); color: var(--ink); border-color: var(--ink);
+}
+.add-panel input:focus, .add-panel select:focus, .add-panel textarea:focus { border-color: var(--ember); outline: none; }
+.rate { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.rate button {
+  width: 40px; height: 40px; border-radius: 50%; border: 2px solid var(--ink); background: var(--paper);
+  font: 400 18px var(--font-display); color: var(--ink); cursor: pointer; transition: transform .12s, background .12s;
+}
+.rate button.on { background: var(--ember); }
+.rate button:hover { transform: scale(1.08); }
+.rate output { font-family: var(--font-mono); font-size: 13px; margin-left: 6px; }
+.panel-actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.panel-actions .btn { cursor: pointer; font-size: 16px; }
+.panel-actions .btn.primary:disabled { opacity: .45; cursor: not-allowed; transform: none; }
+.panel-msg { font-family: var(--font-mono); font-size: 13px; color: var(--ink-soft); margin: 0; }
+.del-row { display: flex; justify-content: flex-end; gap: 8px; align-items: center; font-size: 14px; }
+.del, .del-yes, .del-no {
+  font: 500 13px var(--font-body); border: 1.5px solid var(--ink); background: transparent; color: var(--ink);
+  border-radius: 999px; padding: 5px 12px; cursor: pointer;
+}
+.del:hover, .del-yes { background: var(--ink); color: var(--paper); }
+.del-yes:hover { background: var(--ember); color: var(--ink); border-color: var(--ember); }
+.status { margin-top: 22px; font-family: var(--font-mono); font-size: 14px; color: var(--ink-soft); }
+.status:empty { display: none; }
+@media (max-width: 700px) {
+  .add-grid { grid-template-columns: 1fr; }
+  .add-grid .wide, .add-grid .two { grid-column: auto; }
+}
+
+footer { padding: 40px 0 56px; font-size: 14px; color: var(--ink-soft); }
+footer .wrap { display: flex; justify-content: space-between; gap: 24px; flex-wrap: wrap; border-top: 2px solid var(--ink); padding-top: 20px; }
+footer p { margin: 0; max-width: 60ch; }
+
+@media (max-width: 860px) {
+  .submit, .hosts { grid-template-columns: 1fr; }
+  .hero-grid { grid-template-columns: 1.15fr 1fr; gap: 28px 20px; }
+  .hero-grid .hero-copy, .hero-grid .latest { grid-column: 1 / -1; }
+  .mast { font-size: 15vw; }
+  .mast .b2::after { font-size: 11px; letter-spacing: .4em; }
+  .mascot { box-shadow: 5px 5px 0 var(--ember); border-radius: 16px; }
+  .scale { grid-template-columns: 1fr 1fr; }
+  .scale div { border-bottom: 2px solid var(--ink); }
+  .scale div:last-child { grid-column: span 2; border-bottom: 0; }
+  .submit { padding: 24px; }
+}
+@media (max-width: 420px) {
+  .host { grid-template-columns: 64px 1fr; }
+  .avatar { width: 64px; height: 64px; font-size: 24px; }
+}
+</style>
+</head>
+<body>
+
+<div class="gate" id="gate" role="dialog" aria-modal="true" aria-labelledby="gateTitle" hidden>
+  <form class="gate-card" id="gateForm" novalidate>
+    <div class="big" aria-hidden="true">21+</div>
+    <h2 id="gateTitle">You must be 21 or older to enter</h2>
+    <p>Bam Bam Reviews talks about cannabis products and is for adults of legal age only. Pick your date of birth to continue.</p>
+    <div class="dob">
+      <label for="dobM">Month<select id="dobM" autocomplete="bday-month"><option value="">Month</option></select></label>
+      <label for="dobD">Day<select id="dobD" autocomplete="bday-day"><option value="">Day</option></select></label>
+      <label for="dobY">Year<select id="dobY" autocomplete="bday-year"><option value="">Year</option></select></label>
+    </div>
+    <p class="gate-err" id="gateErr" aria-live="assertive"></p>
+    <div class="gate-actions">
+      <button class="btn primary" type="submit">Enter site</button>
+      <button class="btn" type="button" id="gateNo">I'm under 21</button>
+    </div>
+    <p class="gate-fine">By entering you confirm you're of legal age to view cannabis content where you live. Nothing here is for sale to minors.</p>
+  </form>
+  <div class="gate-card gate-denied" id="gateDenied" hidden>
+    <div class="big" aria-hidden="true">Not yet</div>
+    <h2>Sorry, this site is for adults 21+</h2>
+    <p>Come back when you're of legal age. Take care of yourself out there.</p>
+  </div>
+</div>
+
+<div class="notice"><div class="wrap"><span>21+ only. Consume responsibly where it's legal.</span><span>New episodes every week</span></div></div>
+
+<nav aria-label="Main"><div class="wrap">
+  <a class="logo" href="#top">Bam<span>Bam</span></a>
+  <ul>
+    <li><a href="#tune-in" class="nav-live" id="navLive"><i aria-hidden="true"></i><span>Live &amp; Radio</span></a></li>
+    <li><a href="#reviews">Reviews</a></li>
+    <li><a href="#scale">The Bam Scale</a></li>
+    <li><a href="#hosts">Hosts</a></li>
+    <li><a href="#submit">Send us gear</a></li>
+  </ul>
+</div></nav>
+
+<header class="hero" id="top"><div class="wrap hero-grid">
+  <h1 class="mast" aria-label="Bam Bam Reviews"><span class="b1">BAM</span><span class="b2">BAM</span></h1>
+  <img class="mascot" src="mascot.webp" width="900" height="900" alt="Bam Bam Reviews mascot: a grinning caveman with white hair and a leopard-print outfit, holding a giant joint in front of a stone carved with a microphone">
+  <div class="hero-copy">
+    <p class="lede">The podcast where we smoke it, sip it, rip it and tell you straight whether it's worth your money.</p>
+    <div class="listen">
+      <a class="btn primary" href="#">Listen on Spotify</a>
+      <a class="btn" href="#">Apple Podcasts</a>
+      <a class="btn" href="#">RSS</a>
+    </div>
+  </div>
+  <div class="latest" aria-label="Latest episode">
+    <button class="play" id="play" aria-label="Play latest episode">
+      <svg viewBox="0 0 24 24" fill="currentColor" id="playIcon"><path d="M7 4.5v15l13-7.5z"/></svg>
+    </button>
+    <div>
+      <div class="meta">Latest episode · Ep. 01 · Intro</div>
+      <h3>Welcome to Bam Bam Reviews</h3>
+      <p class="script" id="script">“Hey, welcome to Bam Bam Reviews. Grab your joints, blunts, bongs… wham bam, let’s smoke a couple grams, enjoy the show.”</p>
+      <div class="bar"><i id="prog"></i></div>
+      <div class="time">
+        <span id="cur">0:00</span>
+        <label class="voice-pick" for="voice">Voice
+          <select id="voice">
+            <option value="buttery">Clear (default)</option>
+            <option value="rounded">Deep &amp; smooth</option>
+            <option value="glassy">Crisp</option>
+            <option value="airy">Airy</option>
+          </select>
+        </label>
+      </div>
+      <p class="tts-note" id="ttsNote" hidden>Voice playback works in Chrome or Edge on claude.ai.</p>
+    </div>
+  </div>
+</div></header>
+
+<main>
+<section id="tune-in"><div class="wrap">
+  <div class="sec-head">
+    <div>
+      <span class="tag draft">Placeholder links and station</span>
+      <h2>Tune in</h2>
+    </div>
+    <p>Catch us live on camera three nights a week, or on the radio three more. Saturdays alternate: live one week, radio the next.</p>
+  </div>
+  <div class="tune">
+    <article class="chan live" id="ch-live">
+      <div class="chan-top">
+        <div><h3>Bam Bam Live</h3><p class="sub">Live sesh on camera. Real-time reviews and your questions in chat.</p></div>
+        <span class="badge" data-badge>Off air</span>
+      </div>
+      <div class="count"><span class="lbl" data-lbl>Next live show</span><span class="when" data-when>…</span><span class="num" data-num>--:--:--</span></div>
+      <ul class="sched" data-sched></ul>
+      <a class="btn primary" href="#" data-cta>Watch live on YouTube</a>
+    </article>
+    <article class="chan radio" id="ch-radio">
+      <div class="chan-top">
+        <div><h3>Bam Bam Radio</h3><p class="sub">Our radio hour on 101.9 FM and online. Reviews, call-ins and tunes.</p></div>
+        <span class="badge" data-badge>Off air</span>
+      </div>
+      <div class="count"><span class="lbl" data-lbl>Next radio show</span><span class="when" data-when>…</span><span class="num" data-num>--:--:--</span></div>
+      <ul class="sched" data-sched></ul>
+      <a class="btn primary" href="#" data-cta>Listen on 101.9 FM</a>
+    </article>
+  </div>
+  <p class="tz" id="tz" style="margin-top:14px"></p>
+</div></section>
+
+<section id="reviews" style="padding-top:0"><div class="wrap">
+  <div class="sec-head">
+    <div>
+      <h2>On the table</h2>
+    </div>
+    <div class="filters" role="group" aria-label="Filter reviews">
+      <button type="button" aria-pressed="true" data-f="all">All</button>
+      <button type="button" aria-pressed="false" data-f="flower">Flower</button>
+      <button type="button" aria-pressed="false" data-f="edibles">Edibles</button>
+      <button type="button" aria-pressed="false" data-f="vapes">Vapes</button>
+      <button type="button" aria-pressed="false" data-f="glass">Glass</button>
+      <button type="button" aria-pressed="false" data-f="accessories">Accessories</button>
+      <button type="button" class="add-toggle" id="addToggle" aria-expanded="false" aria-controls="addPanel" hidden>+ Add product</button>
+    </div>
+  </div>
+
+  <form class="add-panel" id="addPanel" hidden>
+    <h3>Add a product</h3>
+    <div class="add-grid">
+      <label for="a-name" class="two">Product name<input id="a-name" required maxlength="80" placeholder="e.g. Wedding Cake, 3.5g"></label>
+      <label for="a-cat">Category
+        <select id="a-cat">
+          <option value="flower">Flower</option><option value="edibles">Edibles</option>
+          <option value="vapes">Vapes</option><option value="glass">Glass</option>
+          <option value="accessories">Accessories</option>
+        </select>
+      </label>
+      <label for="a-s0"><span id="l-s0">Type</span><input id="a-s0" maxlength="24"></label>
+      <label for="a-s1"><span id="l-s1">THC</span><input id="a-s1" maxlength="24"></label>
+      <label for="a-s2"><span id="l-s2">Price</span><input id="a-s2" maxlength="24"></label>
+      <label for="a-ep">Episode (optional)<input id="a-ep" maxlength="20" placeholder="Ep. 04"></label>
+      <label for="a-note" class="two">Your take<textarea id="a-note" rows="2" maxlength="400" placeholder="How it looked, smelled, hit, and whether it's worth it."></textarea></label>
+      <div class="wide" style="display:grid;gap:6px">
+        <span class="tag" style="color:var(--ink-soft)" id="rateLabel">Bam rating (pick one)</span>
+        <div class="rate" role="radiogroup" aria-labelledby="rateLabel" id="rate"></div>
+      </div>
+    </div>
+    <div class="panel-actions">
+      <button type="submit" class="btn primary" id="addBtn" disabled>Add review</button>
+      <button type="button" class="btn" id="addCancel">Cancel</button>
+      <p class="panel-msg" id="addMsg" aria-live="polite">Pick a rating to add it.</p>
+    </div>
+  </form>
+
+  <div class="cards" id="cards"></div>
+  <p class="status" id="status" aria-live="polite">Loading reviews…</p>
+</div></section>
+
+<section id="scale" style="padding-top:0"><div class="wrap">
+  <div class="sec-head">
+    <h2>The Bam Scale</h2>
+    <p>Every product gets one to five Bams. We pay for most of what we review, and we say so when a brand sends it free.</p>
+  </div>
+  <div class="scale">
+    <div><b>1</b><span>Dud. Skip it.</span></div>
+    <div><b>2</b><span>Meh. Only on sale.</span></div>
+    <div><b>3</b><span>Solid. Does the job.</span></div>
+    <div><b>4</b><span>Great. We'd rebuy.</span></div>
+    <div><b>5</b><span>Bam Bam. Instant classic.</span></div>
+  </div>
+</div></section>
+
+<section id="hosts" style="padding-top:0"><div class="wrap">
+  <div class="sec-head"><h2>Your hosts</h2><p class="tag draft">Placeholder bios</p></div>
+  <div class="hosts">
+    <div class="host"><div class="avatar" aria-hidden="true">H1</div><div><h3>Host One</h3><p>Flower snob and terpene nerd. Can tell a Haze from a Kush with eyes closed, mostly.</p></div></div>
+    <div class="host"><div class="avatar" aria-hidden="true">H2</div><div><h3>Host Two</h3><p>Glass collector and gadget tester. Owns more bongs than plates and isn't sorry.</p></div></div>
+  </div>
+</div></section>
+
+<section id="submit" style="padding-top:0"><div class="wrap">
+  <div class="submit">
+    <div>
+      <h2>Want us to review your product?</h2>
+      <p>Brands, glassblowers and shops: tell us what you've got. We review honestly, free samples or not.</p>
+    </div>
+    <form id="form">
+      <label for="f-name">Your name or brand<input id="f-name" required></label>
+      <label for="f-email">Email<input id="f-email" type="email" required></label>
+      <label for="f-type">Product type
+        <select id="f-type"><option>Flower</option><option>Edibles</option><option>Vapes</option><option>Glass</option><option>Accessories</option></select>
+      </label>
+      <label for="f-msg">Tell us about it<textarea id="f-msg" rows="3"></textarea></label>
+      <button class="btn" type="submit">Send pitch</button>
+      <p class="thanks" id="thanks" aria-live="polite"></p>
+    </form>
+  </div>
+</div></section>
+</main>
+
+<footer><div class="wrap">
+  <p><b>Bam Bam Reviews</b>. For adults 21+ in places where cannabis is legal. Nothing here is medical advice. Don't drive high.</p>
+  <p>© 2026 Bam Bam Reviews</p>
+</div></footer>
+
+<script>
+// ---------- Reviews: stored in the page's database ----------
+const CATS = ["flower","edibles","vapes","glass","accessories"];
+const SPEC_LABELS = {
+  flower: ["Type","THC","Price"],
+  edibles: ["Dose","Onset","Price"],
+  vapes: ["Size","Type","Price"],
+  glass: ["Material","Size","Price"],
+  accessories: ["Kind","Material","Price"],
+};
+const wrap = document.getElementById("cards");
+const statusEl = document.getElementById("status");
+let reviews = [];          // [{id, ...data}]
+let filter = "all";
+let canWrite = false;
+let db = null;
+let pendingDelete = null;  // id of card showing "Delete? Yes/No"
+
+const el = (tag, cls, text) => { const n = document.createElement(tag); if (cls) n.className = cls; if (text != null) n.textContent = text; return n; };
+
+function render() {
+  wrap.replaceChildren();
+  const shown = reviews.filter(r => filter === "all" || r.cat === filter);
+  shown.forEach(r => {
+    const card = el("article", "card"); card.dataset.cat = r.cat;
+    const top = el("div", "card-top");
+    top.append(el("span", "cat", r.cat), el("span", "ep", r.ep || ""));
+    const specs = el("dl", "specs");
+    (Array.isArray(r.specs) ? r.specs : []).slice(0, 3).forEach(s => {
+      const d = el("div"); d.append(el("dt", null, s.k || ""), el("dd", null, s.v || "—")); specs.append(d);
+    });
+    const bams = el("div", "bams");
+    const n = Math.max(1, Math.min(5, Number(r.bams) || 1));
+    bams.setAttribute("aria-label", `${n} out of 5 Bams`);
+    for (let i = 1; i <= 5; i++) bams.append(el("i", i <= n ? "on" : ""));
+    bams.append(el("em", null, `${n}/5 Bams`));
+    const foot = el("div"); foot.style.cssText = "display:grid;gap:12px";
+    foot.append(specs, bams);
+    if (canWrite) {
+      const row = el("div", "del-row");
+      if (pendingDelete === r.id) {
+        row.append(el("span", null, "Delete this review?"));
+        const yes = el("button", "del-yes", "Yes, delete"); yes.type = "button";
+        yes.onclick = () => removeReview(r.id);
+        const no = el("button", "del-no", "Keep"); no.type = "button";
+        no.onclick = () => { pendingDelete = null; render(); };
+        row.append(yes, no);
+      } else {
+        const del = el("button", "del", "Delete"); del.type = "button";
+        del.setAttribute("aria-label", `Delete ${r.name}`);
+        del.onclick = () => { pendingDelete = r.id; render(); };
+        row.append(del);
+      }
+      foot.append(row);
+    }
+    card.append(top, el("h3", null, r.name || "Untitled"), el("p", null, r.note || ""), foot);
+    wrap.append(card);
+  });
+  if (!statusEl.dataset.busy) {
+    statusEl.textContent = reviews.length === 0
+      ? (canWrite ? "No reviews yet. Hit “+ Add product” to post your first one." : "No reviews yet. Check back after the next episode.")
+      : (shown.length === 0 ? "Nothing in this category yet." : "");
+  }
+}
+
+document.querySelectorAll(".filters button[data-f]").forEach(b => b.addEventListener("click", () => {
+  document.querySelectorAll(".filters button[data-f]").forEach(x => x.setAttribute("aria-pressed", x === b));
+  filter = b.dataset.f; render();
+}));
+
+async function removeReview(id) {
+  pendingDelete = null;
+  try { await db.doc("reviews/" + id).delete(); }
+  catch (e) { statusEl.textContent = "Couldn't delete that review. Try again."; }
+}
+
+// ---------- Add panel ----------
+const panel = document.getElementById("addPanel");
+const toggle = document.getElementById("addToggle");
+const catSel = document.getElementById("a-cat");
+const rateBox = document.getElementById("rate");
+const addBtn = document.getElementById("addBtn");
+const addMsg = document.getElementById("addMsg");
+const rateWords = ["Dud", "Meh", "Solid", "Great", "Bam Bam"];
+let rating = 0;
+
+for (let i = 1; i <= 5; i++) {
+  const b = el("button", null, String(i)); b.type = "button";
+  b.setAttribute("role", "radio"); b.setAttribute("aria-checked", "false");
+  b.setAttribute("aria-label", `${i} Bam${i > 1 ? "s" : ""}: ${rateWords[i-1]}`);
+  b.onclick = () => { rating = i; paintRate(); };
+  rateBox.append(b);
+}
+const rateOut = el("output"); rateBox.append(rateOut);
+function paintRate() {
+  [...rateBox.querySelectorAll("button")].forEach((b, idx) => {
+    b.classList.toggle("on", idx < rating); b.setAttribute("aria-checked", String(idx + 1 === rating));
+  });
+  rateOut.textContent = rating ? `${rating}/5 · ${rateWords[rating-1]}` : "";
+  addBtn.disabled = !rating;
+  addMsg.textContent = rating ? "" : "Pick a rating to add it.";
+}
+function paintSpecLabels() {
+  SPEC_LABELS[catSel.value].forEach((t, i) => document.getElementById("l-s" + i).textContent = t);
+}
+catSel.onchange = paintSpecLabels;
+function openPanel(open) {
+  panel.hidden = !open; toggle.setAttribute("aria-expanded", String(open));
+  if (open) { if (filter !== "all") catSel.value = filter; paintSpecLabels(); document.getElementById("a-name").focus(); }
+}
+toggle.onclick = () => openPanel(panel.hidden);
+document.getElementById("addCancel").onclick = () => { panel.reset(); rating = 0; paintRate(); openPanel(false); };
+
+panel.addEventListener("submit", async e => {
+  e.preventDefault();
+  const name = document.getElementById("a-name").value.trim();
+  if (!name) { addMsg.textContent = "Give the product a name."; return; }
+  if (!rating) { addMsg.textContent = "Pick a rating first."; return; }
+  const cat = catSel.value;
+  const labels = SPEC_LABELS[cat];
+  const doc = {
+    name, cat, bams: rating,
+    ep: document.getElementById("a-ep").value.trim(),
+    note: document.getElementById("a-note").value.trim(),
+    specs: labels.map((k, i) => ({ k, v: document.getElementById("a-s" + i).value.trim() })),
+    createdAt: Date.now(),
+  };
+  addBtn.disabled = true; addMsg.textContent = "Saving…";
+  try {
+    await db.collection("reviews").add(doc);
+    panel.reset(); rating = 0; paintRate(); openPanel(false);
+    if (filter !== "all" && filter !== cat) document.querySelector(`.filters button[data-f="all"]`).click();
+  } catch (err) {
+    addBtn.disabled = false;
+    addMsg.textContent = err && err.code === "quota_exceeded" ? "The review list is full. Delete some old ones first." : "Couldn't save. Check your connection and try again.";
+  }
+});
+paintRate(); paintSpecLabels();
+
+// ---------- Connect ----------
+(async () => {
+  statusEl.dataset.busy = "1";
+  const loadTimer = setTimeout(() => { statusEl.textContent = "Reviews are taking a while to load. They'll show up once the connection catches up."; }, 10000);
+  db = window.claude ? await window.claude.use("db") : null;
+  const user = window.claude ? await window.claude.use("user") : null;
+  if (!db) {
+    clearTimeout(loadTimer); delete statusEl.dataset.busy;
+    statusEl.textContent = "Sign in to claude.ai to see the reviews."; return;
+  }
+  let w = null;
+  try { w = user ? (user.canEdit ? await user.canEdit() : null) : null; } catch (_) {}
+  canWrite = w === true || (user && (await user.isOwner?.())) === true;
+  toggle.hidden = !canWrite;
+  db.collection("reviews").orderBy("createdAt", "desc").onSnapshot(snap => {
+    reviews = snap.docs.map(d => ({ id: d.id, ...d.data() })).filter(r => CATS.includes(r.cat));
+    if (!snap.metadata.fromCache) { clearTimeout(loadTimer); delete statusEl.dataset.busy; }
+    render();
+  }, () => {
+    clearTimeout(loadTimer); delete statusEl.dataset.busy;
+    statusEl.textContent = "Reviews couldn't load right now. Refresh the page to try again.";
+  });
+})();
+
+// ---------- Age gate ----------
+(() => {
+  const MIN_AGE = 21, KEY = "bambam-age-ok", KEY_NO = "bambam-age-no", REMEMBER_DAYS = 30;
+  const gate = document.getElementById("gate"), form = document.getElementById("gateForm");
+  const denied = document.getElementById("gateDenied"), err = document.getElementById("gateErr");
+  const store = {
+    get(k) { try { return localStorage.getItem(k); } catch (_) { return null; } },
+    set(k, v) { try { localStorage.setItem(k, v); } catch (_) {} },
+  };
+  const main = [...document.body.children].filter(n => n !== gate && n.tagName !== "SCRIPT");
+  function lock(on) {
+    document.body.classList.toggle("gated", on);
+    main.forEach(n => on ? n.setAttribute("inert", "") : n.removeAttribute("inert"));
+    main.forEach(n => on ? n.setAttribute("aria-hidden", "true") : n.removeAttribute("aria-hidden"));
+  }
+  function deny() {
+    form.hidden = true; denied.hidden = false; gate.hidden = false; lock(true);
+    store.set(KEY_NO, String(Date.now()));
+  }
+  const ok = Number(store.get(KEY));
+  const no = Number(store.get(KEY_NO));
+  if (no && Date.now() - no < DAY_MS()) { deny(); return; }
+  if (ok && Date.now() - ok < REMEMBER_DAYS * DAY_MS()) return;
+  gate.hidden = false; lock(true);
+  setTimeout(() => document.getElementById("dobM").focus(), 50);
+  function DAY_MS() { return 86400000; }
+
+  // fill the pickers
+  const selM = document.getElementById("dobM"), selD = document.getElementById("dobD"), selY = document.getElementById("dobY");
+  const monthName = new Intl.DateTimeFormat(undefined, { month: "long" });
+  for (let i = 0; i < 12; i++) selM.add(new Option(monthName.format(new Date(2000, i, 1)), i + 1));
+  const thisYear = new Date().getFullYear();
+  for (let y = thisYear; y >= thisYear - 110; y--) selY.add(new Option(y, y));
+  function fillDays() {
+    const m = +selM.value, y = +selY.value || 2000; // 2000 is a leap year, so Feb 29 shows until a year is picked
+    const max = m ? new Date(y, m, 0).getDate() : 31;
+    const keep = +selD.value;
+    selD.length = 1;
+    for (let d = 1; d <= max; d++) selD.add(new Option(d, d));
+    if (keep && keep <= max) selD.value = keep;
+  }
+  fillDays();
+  [selM, selD, selY].forEach(s => s.addEventListener("change", () => {
+    if (s !== selD) fillDays();
+    [selM, selD, selY].forEach(x => x.classList.toggle("picked", !!x.value));
+    err.textContent = "";
+  }));
+
+  form.addEventListener("submit", e => {
+    e.preventDefault();
+    const m = +document.getElementById("dobM").value, d = +document.getElementById("dobD").value, y = +document.getElementById("dobY").value;
+    const now = new Date();
+    const dob = new Date(y, m - 1, d);
+    if (!m || !d || !y) { err.textContent = "Pick your birth month, day and year."; return; }
+    if (dob.getMonth() !== m - 1 || dob.getDate() !== d || dob > now) { err.textContent = "That date doesn't exist. Check the day you picked."; return; }
+    let age = now.getFullYear() - y;
+    if (now.getMonth() < m - 1 || (now.getMonth() === m - 1 && now.getDate() < d)) age--;
+    if (age < MIN_AGE) { deny(); return; }
+    store.set(KEY, String(Date.now()));
+    gate.hidden = true; lock(false);
+  });
+  document.getElementById("gateNo").addEventListener("click", deny);
+})();
+
+// ---------- Live + radio schedule ----------
+// Show times are set in the hosts' time zone (UTC-7) and shown in each visitor's own time.
+const SHOW_OFFSET_H = -7;
+const SHOWS = {
+  live: {
+    weekly: [ { dow: 1, h: 20, m: 0, mins: 60 }, { dow: 3, h: 20, m: 0, mins: 60 }, { dow: 5, h: 20, m: 0, mins: 60 } ],
+    biweekly: { dow: 6, h: 19, m: 0, mins: 120, anchor: [2026, 10, 14], label: "Saturday special" },
+  },
+  radio: {
+    weekly: [ { dow: 2, h: 21, m: 0, mins: 60 }, { dow: 4, h: 21, m: 0, mins: 60 }, { dow: 0, h: 21, m: 0, mins: 60 } ],
+    biweekly: { dow: 6, h: 19, m: 0, mins: 120, anchor: [2026, 10, 21], label: "Saturday special" },
+  },
+};
+const DAY = 86400000;
+const showDate = (y, mo, d, h, m) => Date.UTC(y, mo, d, h - SHOW_OFFSET_H, m); // show-local → UTC ms
+
+function occurrences(show, fromMs, days) {
+  const out = [];
+  const base = new Date(fromMs + SHOW_OFFSET_H * 3600000); // shift so UTC fields = show-local date
+  const b = show.biweekly, anchorDay = Date.UTC(...b.anchor) / DAY;
+  for (let i = -1; i <= days; i++) {
+    const d = new Date(Date.UTC(base.getUTCFullYear(), base.getUTCMonth(), base.getUTCDate() + i));
+    const y = d.getUTCFullYear(), mo = d.getUTCMonth(), dd = d.getUTCDate(), dow = d.getUTCDay();
+    show.weekly.forEach(s => { if (s.dow === dow) { const st = showDate(y, mo, dd, s.h, s.m); out.push({ start: st, end: st + s.mins * 60000, slot: s }); } });
+    const dayNum = Date.UTC(y, mo, dd) / DAY;
+    if (b.dow === dow && dayNum >= anchorDay && (dayNum - anchorDay) % 14 === 0) {
+      const st = showDate(y, mo, dd, b.h, b.m); out.push({ start: st, end: st + b.mins * 60000, slot: b, special: true });
+    }
+  }
+  return out.sort((a, z) => a.start - z.start);
+}
+
+const fmtDay = new Intl.DateTimeFormat(undefined, { weekday: "short" });
+const fmtTime = new Intl.DateTimeFormat(undefined, { hour: "numeric", minute: "2-digit" });
+const fmtWhen = new Intl.DateTimeFormat(undefined, { weekday: "long", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+const fmtShort = new Intl.DateTimeFormat(undefined, { month: "short", day: "numeric" });
+const pad = n => String(n).padStart(2, "0");
+function countdown(ms) {
+  const s = Math.max(0, Math.floor(ms / 1000));
+  const d = Math.floor(s / 86400), h = Math.floor(s % 86400 / 3600), m = Math.floor(s % 3600 / 60), sec = s % 60;
+  return (d ? d + "d " : "") + `${pad(h)}:${pad(m)}:${pad(sec)}`;
+}
+
+function paintSchedules() {
+  const now = Date.now();
+  Object.entries(SHOWS).forEach(([key, show]) => {
+    const root = document.getElementById("ch-" + key);
+    const occ = occurrences(show, now, 21).filter(o => o.end > now);
+    const current = occ.find(o => o.start <= now);
+    const next = occ.find(o => o.start > now);
+    root.querySelector("[data-badge]").textContent = current ? "Live now" : "Off air";
+    root.querySelector("[data-badge]").classList.toggle("on", !!current);
+    const label = key === "live" ? "live show" : "radio show";
+    if (current) {
+      root.querySelector("[data-lbl]").textContent = "On air now";
+      root.querySelector("[data-when]").textContent = `${current.special ? "Saturday special · " : ""}until ${fmtTime.format(current.end)}`;
+      root.querySelector("[data-num]").textContent = countdown(current.end - now) + " left";
+    } else if (next) {
+      root.querySelector("[data-lbl]").textContent = `Next ${label}${next.special ? " · Saturday special" : ""}`;
+      root.querySelector("[data-when]").textContent = fmtWhen.format(next.start);
+      root.querySelector("[data-num]").textContent = countdown(next.start - now);
+    }
+    root.querySelector("[data-cta]").textContent = key === "live"
+      ? (current ? "Watch now on YouTube" : "Watch live on YouTube")
+      : (current ? "Listen now on 101.9 FM" : "Listen on 101.9 FM");
+    // schedule list: next occurrence of each slot
+    const list = root.querySelector("[data-sched]");
+    if (!list.dataset.built || list.dataset.built !== String(Math.floor(now / 60000))) {
+      list.dataset.built = String(Math.floor(now / 60000));
+      list.replaceChildren();
+      [...show.weekly, show.biweekly].forEach(slot => {
+        const o = occ.find(x => x.slot === slot);
+        if (!o) return;
+        const li = document.createElement("li");
+        if (current && current.slot === slot) li.className = "now";
+        const d = document.createElement("span"); d.className = "d"; d.textContent = slot === show.biweekly ? fmtDay.format(o.start) + " (alt.)" : fmtDay.format(o.start);
+        const t = document.createElement("span"); t.className = "t"; t.textContent = `${fmtTime.format(o.start)} – ${fmtTime.format(o.end)}`;
+        const x = document.createElement("span"); x.className = "x"; x.textContent = slot === show.biweekly ? "next " + fmtShort.format(o.start) : "weekly";
+        li.append(d, t, x); list.append(li);
+      });
+    }
+  });
+  const anyLive = document.querySelector(".badge.on");
+  document.getElementById("navLive").classList.toggle("on", !!anyLive);
+}
+try {
+  const tzName = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  document.getElementById("tz").textContent = `Times shown in your time zone${tzName ? " (" + tzName.replace(/_/g, " ") + ")" : ""}.`;
+} catch (_) {}
+paintSchedules();
+setInterval(paintSchedules, 1000);
+
+// ---------- Spoken intro (Claude voice) ----------
+const INTRO = [
+  { id: "a", text: "Hey, welcome to Bam Bam Reviews.", rate: 0.95 },
+  { id: "b", text: "Grab your joints, blunts, bongs. Wham bam, let's smoke a couple grams... enjoy the show.", rate: 0.92 },
+];
+const EST_MS = { a: 2600, b: 6200 };   // rough length of each line, for the progress bar
+const prog = document.getElementById("prog"), cur = document.getElementById("cur");
+const icon = document.getElementById("playIcon"), play = document.getElementById("play");
+const latest = document.querySelector(".latest"), voiceSel = document.getElementById("voice");
+const ttsNote = document.getElementById("ttsNote");
+const PLAY = '<path d="M7 4.5v15l13-7.5z"/>', STOP = '<path d="M6 6h12v12H6z"/>';
+let tts = null, speaking = false, doneBefore = 0, lineId = "a";
+
+function setUI(on) {
+  speaking = on;
+  latest.classList.toggle("speaking", on);
+  icon.innerHTML = on ? STOP : PLAY;
+  play.setAttribute("aria-label", on ? "Stop intro" : "Play intro");
+}
+function setProgress(ms) {
+  const total = EST_MS.a + EST_MS.b;
+  const heard = Math.min(total, doneBefore + ms);
+  prog.style.width = (heard / total * 100) + "%";
+  cur.textContent = "0:" + String(Math.floor(heard / 1000)).padStart(2, "0");
+}
+
+play.addEventListener("click", async () => {
+  if (!tts) { ttsNote.hidden = false; return; }
+  if (speaking) { try { await tts.stop(); } catch (_) {} return; }
+  doneBefore = 0; setProgress(0); setUI(true);
+  try {
+    await tts.speak(INTRO.map(l => ({ ...l, voice: voiceSel.value, language: "en-CA" })));
+    doneBefore = EST_MS.a + EST_MS.b; setProgress(0);
+  } catch (e) {
+    if (e && e.code === "not_granted") { ttsNote.textContent = "Reading aloud is turned off for this page. You can turn it back on in the page's Permissions menu."; ttsNote.hidden = false; }
+    else if (e && e.code === "rate_limited") { ttsNote.textContent = "Too many plays in a row. Give it a minute and try again."; ttsNote.hidden = false; }
+    else if (e && e.code !== "stopped") { ttsNote.textContent = "The intro couldn't play just now. Try again."; ttsNote.hidden = false; }
+  }
+  setUI(false);
+});
+voiceSel.addEventListener("change", () => { if (speaking && tts) tts.stop().catch(() => {}); });
+
+(async () => {
+  tts = window.claude ? await window.claude.use("tts") : null;
+  if (!tts) { ttsNote.hidden = false; voiceSel.closest("label").hidden = true; return; }
+  tts.onLine(({ id }) => { if (id === "b") doneBefore = EST_MS.a; lineId = id; });
+  tts.onPosition(({ ms }) => setProgress(ms));
+  tts.onState(({ state }) => { if (state === "idle") setUI(false); });
+})();
+
+document.getElementById("form").addEventListener("submit", e => {
+  e.preventDefault();
+  document.getElementById("thanks").textContent = "Preview only: this form isn't connected to an inbox yet.";
+});
+</script>
+</body>
+</html>
