@@ -79,6 +79,7 @@ nav ul a:hover { border-color: var(--ember); }
   transition: transform .15s, background .15s;
 }
 .btn:hover { transform: translateY(-2px); background: var(--haze); }
+.btn[hidden], [data-placeholder][hidden] { display: none !important; }
 .btn.primary { background: var(--ink); color: var(--paper); }
 .btn.primary:hover { background: var(--ember); border-color: var(--ember); color: var(--ink); }
 
@@ -376,9 +377,9 @@ footer p { margin: 0; max-width: 60ch; }
   <div class="hero-copy">
     <p class="lede">The podcast where we smoke it, sip it, rip it and tell you straight whether it's worth your money.</p>
     <div class="listen">
-      <a class="btn primary" href="#">Listen on Spotify</a>
-      <a class="btn" href="#">Apple Podcasts</a>
-      <a class="btn" href="#">RSS</a>
+      <a class="btn primary" href="#" id="lnk-spotify" rel="noopener">Listen on Spotify</a>
+      <a class="btn" href="#" id="lnk-apple" rel="noopener">Apple Podcasts</a>
+      <a class="btn" href="#" id="lnk-rss" rel="noopener">RSS</a>
     </div>
   </div>
   <div class="latest" aria-label="Latest episode">
@@ -386,8 +387,8 @@ footer p { margin: 0; max-width: 60ch; }
       <svg viewBox="0 0 24 24" fill="currentColor" id="playIcon"><path d="M7 4.5v15l13-7.5z"/></svg>
     </button>
     <div>
-      <div class="meta">Latest episode · Ep. 01 · Intro</div>
-      <h3>Welcome to Bam Bam Reviews</h3>
+      <div class="meta">Latest episode · Ep. <span id="epNum">01</span> · Intro</div>
+      <h3 id="epTitle">Welcome to Bam Bam Reviews</h3>
       <p class="script" id="script">“Hey, welcome to Bam Bam Reviews. Grab your joints, blunts, bongs… wham bam, let’s smoke a couple grams, enjoy the show.”</p>
       <div class="bar"><i id="prog"></i></div>
       <div class="time">
@@ -410,7 +411,7 @@ footer p { margin: 0; max-width: 60ch; }
 <section id="tune-in"><div class="wrap">
   <div class="sec-head">
     <div>
-      <span class="tag draft">Placeholder links and station</span>
+      <span class="tag draft" data-placeholder>Placeholder links and station</span>
       <h2>Tune in</h2>
     </div>
     <p>Catch us live on camera three nights a week, or on the radio three more. Saturdays alternate: live one week, radio the next.</p>
@@ -418,21 +419,21 @@ footer p { margin: 0; max-width: 60ch; }
   <div class="tune">
     <article class="chan live" id="ch-live">
       <div class="chan-top">
-        <div><h3>Bam Bam Live</h3><p class="sub">Live sesh on camera. Real-time reviews and your questions in chat.</p></div>
+        <div><h3 data-title>Bam Bam Live</h3><p class="sub" data-blurb>Live sesh on camera. Real-time reviews and your questions in chat.</p></div>
         <span class="badge" data-badge>Off air</span>
       </div>
       <div class="count"><span class="lbl" data-lbl>Next live show</span><span class="when" data-when>…</span><span class="num" data-num>--:--:--</span></div>
       <ul class="sched" data-sched></ul>
-      <a class="btn primary" href="#" data-cta>Watch live on YouTube</a>
+      <a class="btn primary" href="#" data-cta rel="noopener">Watch live on YouTube</a>
     </article>
     <article class="chan radio" id="ch-radio">
       <div class="chan-top">
-        <div><h3>Bam Bam Radio</h3><p class="sub">Our radio hour on 101.9 FM and online. Reviews, call-ins and tunes.</p></div>
+        <div><h3 data-title>Bam Bam Radio</h3><p class="sub" data-blurb>Our radio hour on 101.9 FM and online. Reviews, call-ins and tunes.</p></div>
         <span class="badge" data-badge>Off air</span>
       </div>
       <div class="count"><span class="lbl" data-lbl>Next radio show</span><span class="when" data-when>…</span><span class="num" data-num>--:--:--</span></div>
       <ul class="sched" data-sched></ul>
-      <a class="btn primary" href="#" data-cta>Listen on 101.9 FM</a>
+      <a class="btn primary" href="#" data-cta rel="noopener">Listen on 101.9 FM</a>
     </article>
   </div>
   <p class="tz" id="tz" style="margin-top:14px"></p>
@@ -512,8 +513,8 @@ footer p { margin: 0; max-width: 60ch; }
 </div></section>
 
 <section id="hosts" style="padding-top:0"><div class="wrap">
-  <div class="sec-head"><h2>Your hosts</h2><p class="tag draft">Placeholder bios</p></div>
-  <div class="hosts">
+  <div class="sec-head"><h2>Your hosts</h2><p class="tag draft" data-placeholder>Placeholder bios</p></div>
+  <div class="hosts" id="hostsList">
     <div class="host"><div class="avatar" aria-hidden="true">H1</div><div><h3>Host One</h3><p>Flower snob and terpene nerd. Can tell a Haze from a Kush with eyes closed, mostly.</p></div></div>
     <div class="host"><div class="avatar" aria-hidden="true">H2</div><div><h3>Host Two</h3><p>Glass collector and gadget tester. Owns more bongs than plates and isn't sorry.</p></div></div>
   </div>
@@ -531,7 +532,8 @@ footer p { margin: 0; max-width: 60ch; }
       <label for="f-type">Product type
         <select id="f-type"><option>Flower</option><option>Edibles</option><option>Vapes</option><option>Glass</option><option>Accessories</option></select>
       </label>
-      <label for="f-msg">Tell us about it<textarea id="f-msg" rows="3"></textarea></label>
+      <label for="f-msg">Tell us about it<textarea id="f-msg" rows="3" maxlength="2000"></textarea></label>
+      <input id="f-hp" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0">
       <button class="btn" type="submit">Send pitch</button>
       <p class="thanks" id="thanks" aria-live="polite"></p>
     </form>
@@ -545,6 +547,50 @@ footer p { margin: 0; max-width: 60ch; }
 </div></footer>
 
 <script>
+// ---------- Site content (content.json, edited from admin.html) ----------
+const PHOTO_PATH = /^photos\/[A-Za-z0-9_.-]+\.(jpe?g|png|webp|gif)$/i;
+const photoSrc = p => PHOTO_PATH.test(p) ? p : "/_blob/" + p;
+const safeUrl = u => (typeof u === "string" && /^https?:\/\//i.test(u.trim())) ? u.trim() : "";
+let CONTENT = null;
+const contentReady = (async () => {
+  try {
+    const r = await fetch("content.json?v=" + Date.now(), { cache: "no-store" });
+    if (!r.ok) return null;
+    CONTENT = await r.json();
+    applyContent(CONTENT);
+    return CONTENT;
+  } catch (_) { return null; }
+})();
+function setLink(a, url) {
+  const u = safeUrl(url);
+  if (u) { a.href = u; a.target = "_blank"; a.removeAttribute("aria-disabled"); a.style.opacity = ""; }
+  else { a.href = "#"; a.removeAttribute("target"); }
+}
+function applyContent(c) {
+  const site = c.site || {};
+  document.querySelectorAll("[data-placeholder]").forEach(n => n.hidden = true);
+  const ep = site.latestEpisode || {};
+  if (ep.number) document.getElementById("epNum").textContent = String(ep.number);
+  if (ep.title) document.getElementById("epTitle").textContent = ep.title;
+  if (ep.script) document.getElementById("script").textContent = "“" + ep.script + "”";
+  const links = site.links || {};
+  [["spotify", "lnk-spotify"], ["apple", "lnk-apple"], ["rss", "lnk-rss"]].forEach(([k, id]) => {
+    const a = document.getElementById(id); setLink(a, links[k]);
+    a.hidden = !safeUrl(links[k]) && Object.values(links).some(v => safeUrl(v)); // hide empty ones once any real link exists
+  });
+  if (Array.isArray(site.hosts) && site.hosts.length) {
+    const box = document.getElementById("hostsList"); box.replaceChildren();
+    site.hosts.slice(0, 6).forEach(h => {
+      const row = el("div", "host");
+      const av = el("div", "avatar", (h.name || "?").trim().split(/\s+/).map(w => w[0]).join("").slice(0, 2).toUpperCase());
+      av.setAttribute("aria-hidden", "true");
+      const txt = el("div"); txt.append(el("h3", null, h.name || ""), el("p", null, h.bio || ""));
+      row.append(av, txt); box.append(row);
+    });
+  }
+  if (c.schedule) applySchedule(c.schedule);
+}
+
 // ---------- Reviews: stored in the page's database ----------
 // Reviews shown when the site is hosted outside claude.ai, where the database isn't available.
 const STATIC_REVIEWS = [
@@ -608,12 +654,12 @@ function render() {
       }
       foot.append(row);
     }
-    const photos = (Array.isArray(r.photos) ? r.photos : []).filter(p => typeof p === "string" && /^[A-Za-z0-9_-]{8,64}$/.test(p)).slice(0, 4);
+    const photos = (Array.isArray(r.photos) ? r.photos : []).filter(p => typeof p === "string" && (/^[A-Za-z0-9_-]{8,64}$/.test(p) || PHOTO_PATH.test(p))).slice(0, 4);
     if (photos.length) {
       card.classList.add("has-photo");
       const frame = el("div", "card-photo");
       const main = el("img"); main.alt = `Photo of ${r.name || "the product"}`; main.loading = "lazy"; main.decoding = "async";
-      main.src = "/_blob/" + photos[0];
+      main.src = photoSrc(photos[0]);
       main.onerror = () => { main.remove(); frame.append(el("span", "missing", "Photo unavailable")); };
       frame.append(main);
       card.append(frame);
@@ -622,9 +668,9 @@ function render() {
         photos.forEach((id, i) => {
           const b = el("button"); b.type = "button"; b.setAttribute("aria-pressed", String(i === 0));
           b.setAttribute("aria-label", `Show photo ${i + 1} of ${photos.length}`);
-          const im = el("img"); im.src = "/_blob/" + id; im.alt = ""; im.loading = "lazy";
+          const im = el("img"); im.src = photoSrc(id); im.alt = ""; im.loading = "lazy";
           b.append(im);
-          b.onclick = () => { main.src = "/_blob/" + id; strip.querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed", String(x === b))); };
+          b.onclick = () => { main.src = photoSrc(id); strip.querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed", String(x === b))); };
           strip.append(b);
         });
         card.append(top, strip);
@@ -797,7 +843,9 @@ paintRate(); paintSpecLabels();
     clearTimeout(loadTimer); delete statusEl.dataset.busy;
     if (!window.claude) {
       // Hosted outside claude.ai (e.g. GitHub Pages): show the reviews saved in this file.
-      reviews = STATIC_REVIEWS.slice(); statusEl.textContent = ""; render(); return;
+      const c = await contentReady;
+      reviews = (c && Array.isArray(c.reviews) ? c.reviews : STATIC_REVIEWS).filter(r => r && CATS.includes(r.cat)).slice().sort((a, z) => (z.createdAt || 0) - (a.createdAt || 0));
+      statusEl.textContent = reviews.length ? "" : "No reviews yet. Check back after the next episode."; render(); return;
     }
     statusEl.textContent = "Sign in to claude.ai to see the reviews."; return;
   }
@@ -883,8 +931,12 @@ paintRate(); paintSpecLabels();
 
 // ---------- Live + radio schedule ----------
 // Show times are set in the hosts' time zone (UTC-7) and shown in each visitor's own time.
-const SHOW_OFFSET_H = -7;
-const SHOWS = {
+let SHOW_OFFSET_H = -7;
+const CHAN = {
+  live: { platform: "YouTube", link: "" },
+  radio: { platform: "101.9 FM", link: "" },
+};
+let SHOWS = {
   live: {
     weekly: [ { dow: 1, h: 20, m: 0, mins: 60 }, { dow: 3, h: 20, m: 0, mins: 60 }, { dow: 5, h: 20, m: 0, mins: 60 } ],
     biweekly: { dow: 6, h: 19, m: 0, mins: 120, anchor: [2026, 10, 14], label: "Saturday special" },
@@ -895,18 +947,40 @@ const SHOWS = {
   },
 };
 const DAY = 86400000;
+function applySchedule(sc) {
+  const toSlot = s => { const [h, m] = String(s.start || "0:0").split(":").map(Number); return { dow: +s.dow, h: h || 0, m: m || 0, mins: Math.max(5, +s.mins || 60) }; };
+  if (typeof sc.utcOffset === "number" && sc.utcOffset >= -12 && sc.utcOffset <= 14) SHOW_OFFSET_H = sc.utcOffset;
+  const next = {};
+  ["live", "radio"].forEach(k => {
+    const c = sc[k]; if (!c) { next[k] = SHOWS[k]; return; }
+    const alt = c.alt || {};
+    const [ay, am, ad] = String(alt.anchor || "2026-11-14").split("-").map(Number);
+    next[k] = {
+      weekly: (Array.isArray(c.weekly) ? c.weekly : []).map(toSlot),
+      biweekly: alt.enabled === false ? null : { ...toSlot(alt), anchor: [ay, (am || 1) - 1, ad || 1], label: "Saturday special" },
+    };
+    CHAN[k] = { platform: c.platform || CHAN[k].platform, link: safeUrl(c.link) };
+    const root = document.getElementById("ch-" + k);
+    if (c.title) root.querySelector("[data-title]").textContent = c.title;
+    if (c.blurb) root.querySelector("[data-blurb]").textContent = c.blurb;
+    setLink(root.querySelector("[data-cta]"), c.link);
+  });
+  SHOWS = next;
+  document.querySelectorAll("[data-sched]").forEach(l => delete l.dataset.built);
+  paintSchedules();
+}
 const showDate = (y, mo, d, h, m) => Date.UTC(y, mo, d, h - SHOW_OFFSET_H, m); // show-local → UTC ms
 
 function occurrences(show, fromMs, days) {
   const out = [];
   const base = new Date(fromMs + SHOW_OFFSET_H * 3600000); // shift so UTC fields = show-local date
-  const b = show.biweekly, anchorDay = Date.UTC(...b.anchor) / DAY;
+  const b = show.biweekly, anchorDay = b ? Date.UTC(...b.anchor) / DAY : 0;
   for (let i = -1; i <= days; i++) {
     const d = new Date(Date.UTC(base.getUTCFullYear(), base.getUTCMonth(), base.getUTCDate() + i));
     const y = d.getUTCFullYear(), mo = d.getUTCMonth(), dd = d.getUTCDate(), dow = d.getUTCDay();
     show.weekly.forEach(s => { if (s.dow === dow) { const st = showDate(y, mo, dd, s.h, s.m); out.push({ start: st, end: st + s.mins * 60000, slot: s }); } });
     const dayNum = Date.UTC(y, mo, dd) / DAY;
-    if (b.dow === dow && dayNum >= anchorDay && (dayNum - anchorDay) % 14 === 0) {
+    if (b && b.dow === dow && dayNum >= anchorDay && (dayNum - anchorDay) % 14 === 0) {
       const st = showDate(y, mo, dd, b.h, b.m); out.push({ start: st, end: st + b.mins * 60000, slot: b, special: true });
     }
   }
@@ -936,27 +1010,28 @@ function paintSchedules() {
     const label = key === "live" ? "live show" : "radio show";
     if (current) {
       root.querySelector("[data-lbl]").textContent = "On air now";
-      root.querySelector("[data-when]").textContent = `${current.special ? "Saturday special · " : ""}until ${fmtTime.format(current.end)}`;
+      root.querySelector("[data-when]").textContent = `${current.special ? "Special · " : ""}until ${fmtTime.format(current.end)}`;
       root.querySelector("[data-num]").textContent = countdown(current.end - now) + " left";
     } else if (next) {
-      root.querySelector("[data-lbl]").textContent = `Next ${label}${next.special ? " · Saturday special" : ""}`;
+      root.querySelector("[data-lbl]").textContent = `Next ${label}${next.special ? " · special" : ""}`;
       root.querySelector("[data-when]").textContent = fmtWhen.format(next.start);
       root.querySelector("[data-num]").textContent = countdown(next.start - now);
     }
+    const plat = CHAN[key].platform;
     root.querySelector("[data-cta]").textContent = key === "live"
-      ? (current ? "Watch now on YouTube" : "Watch live on YouTube")
-      : (current ? "Listen now on 101.9 FM" : "Listen on 101.9 FM");
+      ? (current ? `Watch now on ${plat}` : `Watch live on ${plat}`)
+      : (current ? `Listen now on ${plat}` : `Listen on ${plat}`);
     // schedule list: next occurrence of each slot
     const list = root.querySelector("[data-sched]");
     if (!list.dataset.built || list.dataset.built !== String(Math.floor(now / 60000))) {
       list.dataset.built = String(Math.floor(now / 60000));
       list.replaceChildren();
-      [...show.weekly, show.biweekly].forEach(slot => {
+      [...show.weekly, show.biweekly].filter(Boolean).forEach(slot => {
         const o = occ.find(x => x.slot === slot);
         if (!o) return;
         const li = document.createElement("li");
         if (current && current.slot === slot) li.className = "now";
-        const d = document.createElement("span"); d.className = "d"; d.textContent = slot === show.biweekly ? fmtDay.format(o.start) + " (alt.)" : fmtDay.format(o.start);
+        const d = document.createElement("span"); d.className = "d"; d.textContent = slot === show.biweekly ? fmtDay.format(o.start) + " (every other)" : fmtDay.format(o.start);
         const t = document.createElement("span"); t.className = "t"; t.textContent = `${fmtTime.format(o.start)} – ${fmtTime.format(o.end)}`;
         const x = document.createElement("span"); x.className = "x"; x.textContent = slot === show.biweekly ? "next " + fmtShort.format(o.start) : "weekly";
         li.append(d, t, x); list.append(li);
@@ -1081,9 +1156,26 @@ voiceSel.addEventListener("change", () => { if (speaking && tts) tts.stop().catc
   tts.onState(({ state }) => { if (state === "idle") setUI(false); });
 })();
 
-document.getElementById("form").addEventListener("submit", e => {
+document.getElementById("form").addEventListener("submit", async e => {
   e.preventDefault();
-  document.getElementById("thanks").textContent = "Preview only: this form isn't connected to an inbox yet.";
+  const thanks = document.getElementById("thanks"), btn = e.target.querySelector("button[type=submit]");
+  const c = await contentReady;
+  const endpoint = safeUrl(c && c.site && c.site.pitchEndpoint);
+  if (!endpoint) { thanks.textContent = "Pitches aren't open yet. Check back soon."; return; }
+  const pitch = {
+    name: document.getElementById("f-name").value.trim().slice(0, 120),
+    email: document.getElementById("f-email").value.trim().slice(0, 200),
+    type: document.getElementById("f-type").value,
+    message: document.getElementById("f-msg").value.trim().slice(0, 2000),
+    hp: (document.getElementById("f-hp") || {}).value || "",
+  };
+  if (!pitch.name || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(pitch.email)) { thanks.textContent = "Add your name and a real email so we can reply."; return; }
+  btn.disabled = true; thanks.textContent = "Sending…";
+  try {
+    await fetch(endpoint, { method: "POST", mode: "no-cors", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(pitch) });
+    e.target.reset(); thanks.textContent = "Got it! We'll be in touch if it's a fit.";
+  } catch (_) { thanks.textContent = "Couldn't send. Check your connection and try again."; }
+  btn.disabled = false;
 });
 </script>
 </body>

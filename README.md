@@ -16,17 +16,27 @@ Website for **Bam Bam Reviews**, a podcast reviewing cannabis products: flower, 
 - **Reviews**: cards rated 1–5 on the Bam Scale, filterable by category
 - **Hosts** and **Send us gear** pitch form
 
+## Admin
+
+Open **https://harleyloft47-king.github.io/bam-bam-reviews-play/admin.html** and sign in with a GitHub fine-grained access key
+(only this repository, **Contents: Read and write**). The admin edits `content.json` and uploads photos to `photos/`,
+then publishes everything in one commit. GitHub Pages updates the site about a minute later.
+
+- **Reviews**: add, edit, delete, up to 4 photos each, Bam rating
+- **Live & Radio**: weekly show times, every-other-week specials, stream and station links, time zone
+- **Site info**: latest episode, Spotify / Apple / RSS links, hosts
+- **Pitches**: inbox for the "Send us gear" form, stored in a Google Sheet through a small Apps Script (setup steps are in the Pitches tab)
+
 ## Two versions of the same file
 
 `index.html` runs in two places and adapts to each:
 
 | | claude.ai artifact | GitHub Pages (bam-bam-reviews-play) |
 | --- | --- | --- |
-| Reviews | Saved in the artifact's database; hosts add, delete and attach photos on the page | Read from the `STATIC_REVIEWS` list in `index.html` |
+| Reviews | Saved in the artifact's database; hosts add, delete and attach photos on the page | Read from `content.json` (edited in admin.html) |
 | Spoken intro | Claude voice | `intro.mp3` (TTSMaker "Ethan" voice), falling back to the browser voice |
 | Sign-in needed | Yes, for reviews and voice | No |
 
-To change the reviews on the public site, edit `STATIC_REVIEWS` in `index.html` and push.
 
 ## Still placeholder
 

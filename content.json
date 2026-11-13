@@ -1,0 +1,236 @@
+{
+  "version": 1,
+  "updatedAt": "2026-11-13T00:00:00Z",
+  "site": {
+    "latestEpisode": {
+      "number": "01",
+      "title": "Welcome to Bam Bam Reviews",
+      "script": "Hey, welcome to Bam Bam Reviews. Grab your joints, blunts, bongs… wham bam, let’s smoke a couple grams, enjoy the show."
+    },
+    "links": {
+      "spotify": "",
+      "apple": "",
+      "rss": ""
+    },
+    "hosts": [
+      {
+        "name": "Host One",
+        "bio": "Flower snob and terpene nerd. Can tell a Haze from a Kush with eyes closed, mostly."
+      },
+      {
+        "name": "Host Two",
+        "bio": "Glass collector and gadget tester. Owns more bongs than plates and isn't sorry."
+      }
+    ],
+    "pitchEndpoint": ""
+  },
+  "schedule": {
+    "utcOffset": -7,
+    "live": {
+      "title": "Bam Bam Live",
+      "blurb": "Live sesh on camera. Real-time reviews and your questions in chat.",
+      "platform": "YouTube",
+      "link": "",
+      "weekly": [
+        {
+          "dow": 1,
+          "start": "20:00",
+          "mins": 60
+        },
+        {
+          "dow": 3,
+          "start": "20:00",
+          "mins": 60
+        },
+        {
+          "dow": 5,
+          "start": "20:00",
+          "mins": 60
+        }
+      ],
+      "alt": {
+        "enabled": true,
+        "dow": 6,
+        "start": "19:00",
+        "mins": 120,
+        "anchor": "2026-11-14"
+      }
+    },
+    "radio": {
+      "title": "Bam Bam Radio",
+      "blurb": "Our radio hour on 101.9 FM and online. Reviews, call-ins and tunes.",
+      "platform": "101.9 FM",
+      "link": "",
+      "weekly": [
+        {
+          "dow": 2,
+          "start": "21:00",
+          "mins": 60
+        },
+        {
+          "dow": 4,
+          "start": "21:00",
+          "mins": 60
+        },
+        {
+          "dow": 0,
+          "start": "21:00",
+          "mins": 60
+        }
+      ],
+      "alt": {
+        "enabled": true,
+        "dow": 6,
+        "start": "19:00",
+        "mins": 120,
+        "anchor": "2026-11-21"
+      }
+    }
+  },
+  "reviews": [
+    {
+      "id": "s6",
+      "cat": "flower",
+      "ep": "Ep. 03",
+      "name": "Sample Strain: Gelato",
+      "note": "Dense, sticky nugs with a sweet, creamy finish. Hits heavy, best after dinner.",
+      "specs": [
+        {
+          "k": "Type",
+          "v": "Indica-lean"
+        },
+        {
+          "k": "THC",
+          "v": "24%"
+        },
+        {
+          "k": "Price",
+          "v": "$45/⅛"
+        }
+      ],
+      "bams": 4,
+      "photos": [],
+      "createdAt": 1762999999999
+    },
+    {
+      "id": "s5",
+      "cat": "glass",
+      "ep": "Ep. 03",
+      "name": "Sample: Silicone Travel Pipe",
+      "note": "Basically indestructible and easy to clean. Gets hot near the bowl.",
+      "specs": [
+        {
+          "k": "Material",
+          "v": "Silicone"
+        },
+        {
+          "k": "Size",
+          "v": "4 in"
+        },
+        {
+          "k": "Price",
+          "v": "$18"
+        }
+      ],
+      "bams": 3,
+      "photos": [],
+      "createdAt": 1762999999998
+    },
+    {
+      "id": "s4",
+      "cat": "vapes",
+      "ep": "Ep. 02",
+      "name": "Sample: Live Resin Cart",
+      "note": "Big flavor on the first pulls, then it fades. Hardware clogged once.",
+      "specs": [
+        {
+          "k": "Size",
+          "v": "1g"
+        },
+        {
+          "k": "Type",
+          "v": "Live resin"
+        },
+        {
+          "k": "Price",
+          "v": "$45"
+        }
+      ],
+      "bams": 2,
+      "photos": [],
+      "createdAt": 1762999999997
+    },
+    {
+      "id": "s3",
+      "cat": "edibles",
+      "ep": "Ep. 02",
+      "name": "Sample: Mango Gummies",
+      "note": "Tastes like candy, not weed. Kicked in at about 50 minutes and dosing was consistent.",
+      "specs": [
+        {
+          "k": "Dose",
+          "v": "10mg"
+        },
+        {
+          "k": "Onset",
+          "v": "~50 min"
+        },
+        {
+          "k": "Price",
+          "v": "$20/10"
+        }
+      ],
+      "bams": 5,
+      "photos": [],
+      "createdAt": 1762999999996
+    },
+    {
+      "id": "s2",
+      "cat": "glass",
+      "ep": "Ep. 01",
+      "name": "Sample: 12\" Beaker Bong",
+      "note": "Thick 7mm glass and a solid downstem. Heavy, stable, a little plain on looks.",
+      "specs": [
+        {
+          "k": "Material",
+          "v": "7mm glass"
+        },
+        {
+          "k": "Size",
+          "v": "12 in"
+        },
+        {
+          "k": "Price",
+          "v": "$90"
+        }
+      ],
+      "bams": 3,
+      "photos": [],
+      "createdAt": 1762999999995
+    },
+    {
+      "id": "s1",
+      "cat": "flower",
+      "ep": "Ep. 01",
+      "name": "Sample Strain: Blue Dream",
+      "note": "Berry nose, smooth burn, clear head. A daytime hybrid that doesn't knock you flat.",
+      "specs": [
+        {
+          "k": "Type",
+          "v": "Hybrid"
+        },
+        {
+          "k": "THC",
+          "v": "21%"
+        },
+        {
+          "k": "Price",
+          "v": "$35/⅛"
+        }
+      ],
+      "bams": 4,
+      "photos": [],
+      "createdAt": 1762999999994
+    }
+  ]
+}
