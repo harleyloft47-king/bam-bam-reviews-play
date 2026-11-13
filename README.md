@@ -2,7 +2,7 @@
 
 Website for **Bam Bam Reviews**, a podcast reviewing cannabis products: flower, edibles, vapes, glass and accessories. For adults 21+ only.
 
-**Live site:** https://harleyloft47-king.github.io/bam-bam-reviews/
+**Live site:** https://harleyloft47-king.github.io/bam-bam-reviews-play/
 
 ## What's on the site
 
@@ -20,7 +20,7 @@ Website for **Bam Bam Reviews**, a podcast reviewing cannabis products: flower, 
 
 `index.html` runs in two places and adapts to each:
 
-| | claude.ai artifact | GitHub Pages (this repo) |
+| | claude.ai artifact | GitHub Pages (bam-bam-reviews-play) |
 | --- | --- | --- |
 | Reviews | Saved in the artifact's database; hosts add, delete and attach photos on the page | Read from the `STATIC_REVIEWS` list in `index.html` |
 | Spoken intro | Claude voice | The visitor's browser voice (Canadian English when available) |
