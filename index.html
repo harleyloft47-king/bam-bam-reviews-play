@@ -548,11 +548,24 @@ footer p { margin: 0; max-width: 60ch; }
 
 <script>
 // ---------- Site content (content.json, edited from admin.html) ----------
-const PHOTO_PATH = /^photos\/[A-Za-z0-9_.-]+\.(jpe?g|png|webp|gif)$/i;
+const PHOTO_PATH = /^(photos\/[A-Za-z0-9_.-]+\.(jpe?g|png|webp|gif)|https:\/\/lh3\.googleusercontent\.com\/d\/[A-Za-z0-9_-]{10,})$/i;
 const photoSrc = p => PHOTO_PATH.test(p) ? p : "/_blob/" + p;
 const safeUrl = u => (typeof u === "string" && /^https?:\/\//i.test(u.trim())) ? u.trim() : "";
-let CONTENT = null;
+let CONTENT = null, API = "";
 const contentReady = (async () => {
+  if (window.claude) return null; // the claude.ai version keeps its own data
+  // 1) the back office (Google Apps Script) named in config.json, 2) content.json in the repo
+  try {
+    const cr = await fetch("config.json?v=" + Date.now(), { cache: "no-store" });
+    if (cr.ok) { const cfg = await cr.json(); if (/^https:\/\/script\.google(usercontent)?\.com\//.test(cfg.api || "")) API = cfg.api; }
+  } catch (_) {}
+  if (API) {
+    try {
+      const r = await fetch(API + "?action=content&t=" + Date.now());
+      const j = await r.json();
+      if (j && !j.empty && Array.isArray(j.reviews)) { CONTENT = j; applyContent(j); return j; }
+    } catch (_) {}
+  }
   try {
     const r = await fetch("content.json?v=" + Date.now(), { cache: "no-store" });
     if (!r.ok) return null;
@@ -1159,8 +1172,8 @@ voiceSel.addEventListener("change", () => { if (speaking && tts) tts.stop().catc
 document.getElementById("form").addEventListener("submit", async e => {
   e.preventDefault();
   const thanks = document.getElementById("thanks"), btn = e.target.querySelector("button[type=submit]");
-  const c = await contentReady;
-  const endpoint = safeUrl(c && c.site && c.site.pitchEndpoint);
+  await contentReady;
+  const endpoint = API;
   if (!endpoint) { thanks.textContent = "Pitches aren't open yet. Check back soon."; return; }
   const pitch = {
     name: document.getElementById("f-name").value.trim().slice(0, 120),
@@ -1172,7 +1185,9 @@ document.getElementById("form").addEventListener("submit", async e => {
   if (!pitch.name || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(pitch.email)) { thanks.textContent = "Add your name and a real email so we can reply."; return; }
   btn.disabled = true; thanks.textContent = "Sending…";
   try {
-    await fetch(endpoint, { method: "POST", mode: "no-cors", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(pitch) });
+    const r = await fetch(endpoint, { method: "POST", body: JSON.stringify({ action: "pitch", ...pitch }) });
+    const j = await r.json().catch(() => ({}));
+    if (j.error) { thanks.textContent = j.error === "busy" ? "Lots of pitches right now. Try again in a few minutes." : "Add your name and a real email so we can reply."; btn.disabled = false; return; }
     e.target.reset(); thanks.textContent = "Got it! We'll be in touch if it's a fit.";
   } catch (_) { thanks.textContent = "Couldn't send. Check your connection and try again."; }
   btn.disabled = false;

@@ -18,14 +18,19 @@ Website for **Bam Bam Reviews**, a podcast reviewing cannabis products: flower, 
 
 ## Admin
 
-Open **https://harleyloft47-king.github.io/bam-bam-reviews-play/admin.html** and sign in with a GitHub fine-grained access key
-(only this repository, **Contents: Read and write**). The admin edits `content.json` and uploads photos to `photos/`,
-then publishes everything in one commit. GitHub Pages updates the site about a minute later.
+**https://harleyloft47-king.github.io/bam-bam-reviews-play/admin.html** (password sign-in)
+
+The admin talks to a small **Google Apps Script back office** in the owner's Google account. The script
+checks the password (with a lockout after repeated wrong tries), stores the site content and review photos in a
+**Bam Bam Site** Drive folder, and saves pitches to a **Bam Bam Pitches** Google Sheet. The script itself is kept
+private and is not in this repository. Its web-app address goes in `config.json` as `"api"`.
 
 - **Reviews**: add, edit, delete, up to 4 photos each, Bam rating
 - **Live & Radio**: weekly show times, every-other-week specials, stream and station links, time zone
 - **Site info**: latest episode, Spotify / Apple / RSS links, hosts
-- **Pitches**: inbox for the "Send us gear" form, stored in a Google Sheet through a small Apps Script (setup steps are in the Pitches tab)
+- **Pitches**: messages from the "Send us gear" form
+
+The public page loads content from the back office, and falls back to `content.json` in this repo if it can't reach it.
 
 ## Two versions of the same file
 
@@ -33,7 +38,7 @@ then publishes everything in one commit. GitHub Pages updates the site about a m
 
 | | claude.ai artifact | GitHub Pages (bam-bam-reviews-play) |
 | --- | --- | --- |
-| Reviews | Saved in the artifact's database; hosts add, delete and attach photos on the page | Read from `content.json` (edited in admin.html) |
+| Reviews | Saved in the artifact's database; hosts add, delete and attach photos on the page | From the back office (edited in admin.html), else `content.json` |
 | Spoken intro | Claude voice | `intro.mp3` (TTSMaker "Ethan" voice), falling back to the browser voice |
 | Sign-in needed | Yes, for reviews and voice | No |
 
