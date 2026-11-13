@@ -23,7 +23,7 @@ Website for **Bam Bam Reviews**, a podcast reviewing cannabis products: flower, 
 | | claude.ai artifact | GitHub Pages (bam-bam-reviews-play) |
 | --- | --- | --- |
 | Reviews | Saved in the artifact's database; hosts add, delete and attach photos on the page | Read from the `STATIC_REVIEWS` list in `index.html` |
-| Spoken intro | Claude voice | The visitor's browser voice (Canadian English when available) |
+| Spoken intro | Claude voice | `intro.mp3` (TTSMaker "Ethan" voice), falling back to the browser voice |
 | Sign-in needed | Yes, for reviews and voice | No |
 
 To change the reviews on the public site, edit `STATIC_REVIEWS` in `index.html` and push.
