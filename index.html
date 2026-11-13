@@ -149,6 +149,25 @@ section { padding: 64px 0; }
 .bams i.on { background: var(--ember); }
 .bams em { font-style: normal; font-family: var(--font-mono); font-size: 12px; margin-left: 6px; }
 
+/* Sponsors */
+.sponsors { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 18px; }
+.sponsor { background: var(--paper); border: 2px solid var(--ink); border-radius: 16px; padding: 18px; display: flex; flex-direction: column; gap: 12px; position: relative; }
+.sponsor .logo-box { height: 96px; border-radius: 12px; background: #fff; border: 1.5px solid var(--ink); display: grid; place-items: center; overflow: hidden; padding: 10px; box-sizing: border-box; }
+.sponsor .logo-box > * { min-height: 0; }
+.sponsor .logo-box img { width: 100%; height: 100%; object-fit: contain; display: block; }
+.sponsor .logo-box .mono-logo { font-family: var(--font-display); font-size: 34px; color: var(--ember); }
+.sponsor h3 { font-size: 20px; line-height: 1.15; }
+.sponsor .thanks-note { margin: 0; color: var(--ink-soft); font-size: 15.5px; }
+.sponsor .thanks-note::before { content: "“"; }
+.sponsor .thanks-note::after { content: "”"; }
+.sponsor .foot { margin-top: auto; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.promo { font-family: var(--font-mono); font-size: 12.5px; border: 1.5px dashed var(--ink); border-radius: 6px; padding: 4px 8px; background: var(--paper-2); cursor: pointer; }
+.promo:hover { background: var(--haze); }
+.sponsor .btn { padding: 7px 14px; font-size: 14px; }
+.sponsor-cta { border: 2px dashed var(--ink-soft); border-radius: 16px; padding: 22px; display: flex; flex-direction: column; justify-content: center; gap: 10px; color: var(--ink-soft); }
+.sponsor-cta b { color: var(--ink); font-size: 18px; }
+.sponsor-cta .btn { align-self: flex-start; }
+
 /* Hosts */
 .hosts { display: grid; grid-template-columns: repeat(2, 1fr); gap: 18px; }
 .host { display: grid; grid-template-columns: 96px 1fr; gap: 18px; align-items: start; border-top: 2px solid var(--ink); padding-top: 18px; }
@@ -369,6 +388,7 @@ footer p { margin: 0; max-width: 60ch; }
     <li><a href="#tune-in" class="nav-live" id="navLive"><i aria-hidden="true"></i><span>Live &amp; Radio</span></a></li>
     <li><a href="#reviews">Reviews</a></li>
     <li><a href="#scale">The Bam Scale</a></li>
+    <li><a href="#sponsors">Sponsors</a></li>
     <li><a href="#hosts">Hosts</a></li>
     <li><a href="#submit">Send us gear</a></li>
     <li><a class="admin-btn" href="https://claude.ai/artifact/T5AUXh92bcsSRFR4CXAyfM" target="_blank" rel="noopener" title="For Bam Bam hosts only"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 11V8a5 5 0 0 1 10 0v3M5 11h14v10H5z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>Admin</a></li>
@@ -516,6 +536,20 @@ footer p { margin: 0; max-width: 60ch; }
   </div>
 </div></section>
 
+<section id="sponsors" style="padding-top:0"><div class="wrap">
+  <div class="sec-head">
+    <h2>Thanks to our sponsors</h2>
+    <p>These folks help keep Bam Bam on the air. Show them some love.</p>
+  </div>
+  <div class="sponsors" id="sponsorList">
+    <div class="sponsor-cta" id="sponsorCta">
+      <b>Your brand here</b>
+      <span>Want to back the show and get a shout-out on every episode?</span>
+      <a class="btn" href="#submit">Become a sponsor</a>
+    </div>
+  </div>
+</div></section>
+
 <section id="hosts" style="padding-top:0"><div class="wrap">
   <div class="sec-head"><h2>Your hosts</h2><p class="tag draft" data-placeholder>Placeholder bios</p></div>
   <div class="hosts" id="hostsList">
@@ -602,6 +636,32 @@ function applyContent(c) {
     });
   }
   if (c.schedule) applySchedule(c.schedule);
+  renderSponsors(Array.isArray(c.sponsors) ? c.sponsors : []);
+}
+function renderSponsors(list) {
+  const box = document.getElementById("sponsorList"), cta = document.getElementById("sponsorCta");
+  box.querySelectorAll(".sponsor").forEach(n => n.remove());
+  list.filter(sp => sp && sp.name).slice(0, 24).forEach(sp => {
+    const card = el("article", "sponsor");
+    const lb = el("div", "logo-box");
+    if (typeof sp.logo === "string" && PHOTO_PATH.test(sp.logo)) {
+      const im = el("img"); im.src = photoSrc(sp.logo); im.alt = sp.name + " logo"; im.loading = "lazy";
+      im.onerror = () => { im.remove(); lb.append(el("span", "mono-logo", sp.name.slice(0, 2).toUpperCase())); };
+      lb.append(im);
+    } else lb.append(el("span", "mono-logo", sp.name.trim().split(/\s+/).map(w => w[0]).join("").slice(0, 3).toUpperCase()));
+    card.append(lb, el("h3", null, sp.name));
+    if (sp.message) card.append(el("p", "thanks-note", sp.message));
+    const foot = el("div", "foot");
+    const url = safeUrl(sp.link);
+    if (url) { const a = el("a", "btn", "Visit " + sp.name); a.href = url; a.target = "_blank"; a.rel = "noopener sponsored"; foot.append(a); }
+    if (sp.promo) {
+      const pr = el("button", "promo", "Code: " + sp.promo); pr.type = "button"; pr.title = "Copy code";
+      pr.onclick = async () => { try { await navigator.clipboard.writeText(sp.promo); pr.textContent = "Copied!"; setTimeout(() => pr.textContent = "Code: " + sp.promo, 1500); } catch (_) {} };
+      foot.append(pr);
+    }
+    if (foot.children.length) card.append(foot);
+    box.insertBefore(card, cta);
+  });
 }
 
 // ---------- Reviews: stored in the page's database ----------
