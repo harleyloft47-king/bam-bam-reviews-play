@@ -1,99 +1,14 @@
 {
-  "version": 1,
-  "updatedAt": "2026-11-13T00:00:00Z",
-  "site": {
-    "latestEpisode": {
-      "number": "01",
-      "title": "Welcome to Bam Bam Reviews",
-      "script": "Hey, welcome to Bam Bam Reviews. Grab your joints, blunts, bongs… wham bam, let’s smoke a couple grams, enjoy the show."
-    },
-    "links": {
-      "spotify": "",
-      "apple": "",
-      "rss": ""
-    },
-    "hosts": [
-      {
-        "name": "Host One",
-        "bio": "Flower snob and terpene nerd. Can tell a Haze from a Kush with eyes closed, mostly."
-      },
-      {
-        "name": "Host Two",
-        "bio": "Glass collector and gadget tester. Owns more bongs than plates and isn't sorry."
-      }
-    ],
-    "pitchEndpoint": ""
-  },
-  "schedule": {
-    "utcOffset": -7,
-    "live": {
-      "title": "Bam Bam Live",
-      "blurb": "Live sesh on camera. Real-time reviews and your questions in chat.",
-      "platform": "YouTube",
-      "link": "",
-      "weekly": [
-        {
-          "dow": 1,
-          "start": "20:00",
-          "mins": 60
-        },
-        {
-          "dow": 3,
-          "start": "20:00",
-          "mins": 60
-        },
-        {
-          "dow": 5,
-          "start": "20:00",
-          "mins": 60
-        }
-      ],
-      "alt": {
-        "enabled": true,
-        "dow": 6,
-        "start": "19:00",
-        "mins": 120,
-        "anchor": "2026-11-14"
-      }
-    },
-    "radio": {
-      "title": "Bam Bam Radio",
-      "blurb": "Our radio hour on 101.9 FM and online. Reviews, call-ins and tunes.",
-      "platform": "101.9 FM",
-      "link": "",
-      "weekly": [
-        {
-          "dow": 2,
-          "start": "21:00",
-          "mins": 60
-        },
-        {
-          "dow": 4,
-          "start": "21:00",
-          "mins": 60
-        },
-        {
-          "dow": 0,
-          "start": "21:00",
-          "mins": 60
-        }
-      ],
-      "alt": {
-        "enabled": true,
-        "dow": 6,
-        "start": "19:00",
-        "mins": 120,
-        "anchor": "2026-11-21"
-      }
-    }
-  },
   "reviews": [
     {
-      "id": "s6",
+      "bams": 4,
       "cat": "flower",
+      "createdAt": 1762999999999,
       "ep": "Ep. 03",
+      "id": "s6",
       "name": "Sample Strain: Gelato",
       "note": "Dense, sticky nugs with a sweet, creamy finish. Hits heavy, best after dinner.",
+      "photos": [],
       "specs": [
         {
           "k": "Type",
@@ -107,17 +22,17 @@
           "k": "Price",
           "v": "$45/⅛"
         }
-      ],
-      "bams": 4,
-      "photos": [],
-      "createdAt": 1762999999999
+      ]
     },
     {
-      "id": "s5",
+      "bams": 3,
       "cat": "glass",
+      "createdAt": 1762999999998,
       "ep": "Ep. 03",
+      "id": "s5",
       "name": "Sample: Silicone Travel Pipe",
       "note": "Basically indestructible and easy to clean. Gets hot near the bowl.",
+      "photos": [],
       "specs": [
         {
           "k": "Material",
@@ -131,17 +46,17 @@
           "k": "Price",
           "v": "$18"
         }
-      ],
-      "bams": 3,
-      "photos": [],
-      "createdAt": 1762999999998
+      ]
     },
     {
-      "id": "s4",
+      "bams": 2,
       "cat": "vapes",
+      "createdAt": 1762999999997,
       "ep": "Ep. 02",
+      "id": "s4",
       "name": "Sample: Live Resin Cart",
       "note": "Big flavor on the first pulls, then it fades. Hardware clogged once.",
+      "photos": [],
       "specs": [
         {
           "k": "Size",
@@ -155,17 +70,17 @@
           "k": "Price",
           "v": "$45"
         }
-      ],
-      "bams": 2,
-      "photos": [],
-      "createdAt": 1762999999997
+      ]
     },
     {
-      "id": "s3",
+      "bams": 5,
       "cat": "edibles",
+      "createdAt": 1762999999996,
       "ep": "Ep. 02",
+      "id": "s3",
       "name": "Sample: Mango Gummies",
       "note": "Tastes like candy, not weed. Kicked in at about 50 minutes and dosing was consistent.",
+      "photos": [],
       "specs": [
         {
           "k": "Dose",
@@ -179,17 +94,17 @@
           "k": "Price",
           "v": "$20/10"
         }
-      ],
-      "bams": 5,
-      "photos": [],
-      "createdAt": 1762999999996
+      ]
     },
     {
-      "id": "s2",
+      "bams": 3,
       "cat": "glass",
+      "createdAt": 1762999999995,
       "ep": "Ep. 01",
+      "id": "s2",
       "name": "Sample: 12\" Beaker Bong",
       "note": "Thick 7mm glass and a solid downstem. Heavy, stable, a little plain on looks.",
+      "photos": [],
       "specs": [
         {
           "k": "Material",
@@ -203,17 +118,17 @@
           "k": "Price",
           "v": "$90"
         }
-      ],
-      "bams": 3,
-      "photos": [],
-      "createdAt": 1762999999995
+      ]
     },
     {
-      "id": "s1",
+      "bams": 4,
       "cat": "flower",
+      "createdAt": 1762999999994,
       "ep": "Ep. 01",
+      "id": "s1",
       "name": "Sample Strain: Blue Dream",
       "note": "Berry nose, smooth burn, clear head. A daytime hybrid that doesn't knock you flat.",
+      "photos": [],
       "specs": [
         {
           "k": "Type",
@@ -227,10 +142,94 @@
           "k": "Price",
           "v": "$35/⅛"
         }
-      ],
-      "bams": 4,
-      "photos": [],
-      "createdAt": 1762999999994
+      ]
     }
-  ]
+  ],
+  "schedule": {
+    "live": {
+      "alt": {
+        "anchor": "2026-11-14",
+        "dow": 6,
+        "enabled": true,
+        "mins": 120,
+        "start": "19:00"
+      },
+      "blurb": "Live sesh on camera. Real-time reviews and your questions in chat.",
+      "link": "",
+      "platform": "YouTube",
+      "title": "Bam Bam Live",
+      "weekly": [
+        {
+          "dow": 1,
+          "mins": 60,
+          "start": "20:00"
+        },
+        {
+          "dow": 3,
+          "mins": 60,
+          "start": "20:00"
+        },
+        {
+          "dow": 5,
+          "mins": 60,
+          "start": "20:00"
+        }
+      ]
+    },
+    "radio": {
+      "alt": {
+        "anchor": "2026-11-21",
+        "dow": 6,
+        "enabled": true,
+        "mins": 120,
+        "start": "19:00"
+      },
+      "blurb": "Our radio hour on 101.9 FM and online. Reviews, call-ins and tunes.",
+      "link": "",
+      "platform": "101.9 FM",
+      "title": "Bam Bam Radio",
+      "weekly": [
+        {
+          "dow": 2,
+          "mins": 60,
+          "start": "21:00"
+        },
+        {
+          "dow": 4,
+          "mins": 60,
+          "start": "21:00"
+        },
+        {
+          "dow": 0,
+          "mins": 60,
+          "start": "21:00"
+        }
+      ]
+    },
+    "utcOffset": -7
+  },
+  "site": {
+    "hosts": [
+      {
+        "bio": "Flower snob and terpene nerd. Can tell a Haze from a Kush with eyes closed, mostly.",
+        "name": "Host One"
+      },
+      {
+        "bio": "Glass collector and gadget tester. Owns more bongs than plates and isn't sorry.",
+        "name": "Host Two"
+      }
+    ],
+    "latestEpisode": {
+      "number": "01",
+      "script": "Hey, welcome to Bam Bam Reviews. Grab your joints, blunts, bongs… wham bam, let’s smoke a couple grams, enjoy the show.",
+      "title": "Welcome to Bam Bam Reviews"
+    },
+    "links": {
+      "apple": "",
+      "rss": "",
+      "spotify": ""
+    }
+  },
+  "updatedAt": "2026-11-13T00:00:00Z",
+  "version": 1
 }
