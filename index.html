@@ -128,8 +128,9 @@ section { padding: 64px 0; }
 .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 18px; margin-top: 22px; }
 .card {
   background: var(--paper-2); border: 2px solid var(--ink); border-radius: 14px;
-  padding: 18px; display: grid; gap: 12px; grid-template-rows: auto auto 1fr auto;
+  padding: 18px; display: flex; flex-direction: column; gap: 12px;
 }
+.card > div:last-child { margin-top: auto; }
 .card[hidden] { display: none; }
 .card-top { display: flex; justify-content: space-between; gap: 10px; align-items: center; }
 .cat { font-family: var(--font-mono); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; border: 1.5px solid var(--ink); padding: 3px 8px; border-radius: 4px; }
@@ -268,6 +269,39 @@ body.gated { overflow: hidden; }
 }
 .del:hover, .del-yes { background: var(--ink); color: var(--paper); }
 .del-yes:hover { background: var(--ember); color: var(--ink); border-color: var(--ember); }
+/* Photos: picker + card gallery */
+.photo-field { display: grid; gap: 8px; }
+.photo-field[hidden] { display: none; }
+.photo-row { display: flex; gap: 10px; flex-wrap: wrap; }
+.drop {
+  width: 132px; height: 132px; border: 2px dashed var(--ink); border-radius: 14px; background: var(--paper);
+  display: grid; place-content: center; justify-items: center; gap: 4px; text-align: center; cursor: pointer;
+  color: var(--ink); text-transform: none; letter-spacing: 0; font: 600 14px var(--font-body); padding: 8px;
+  transition: background .15s;
+}
+.drop:hover, .drop.over { background: var(--haze); }
+.drop:focus-within { outline: 3px solid var(--ember); outline-offset: 2px; }
+.drop[hidden] { display: none; }
+.drop input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+.drop svg { width: 28px; height: 28px; }
+.drop small { font: 400 11px var(--font-body); color: var(--ink-soft); }
+.thumb { position: relative; width: 132px; height: 132px; border-radius: 14px; overflow: hidden; border: 2px solid var(--ink); background: var(--paper); }
+.thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.thumb button {
+  position: absolute; top: 6px; right: 6px; width: 28px; height: 28px; border-radius: 50%;
+  border: 0; background: var(--ink); color: var(--paper); font: 700 16px/1 var(--font-body); cursor: pointer;
+}
+.thumb button:hover { background: var(--ember); color: var(--ink); }
+.thumb .cover-tag { position: absolute; left: 6px; bottom: 6px; background: var(--ember); color: var(--ink); font: 500 10px var(--font-mono); text-transform: uppercase; letter-spacing: .06em; padding: 2px 6px; border-radius: 4px; }
+
+.card-photo { margin: -18px -18px 0; border-bottom: 2px solid var(--ink); border-radius: 12px 12px 0 0; overflow: hidden; background: var(--ink); position: relative; aspect-ratio: 4 / 3; }
+.card-photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.card-photo .missing { position: absolute; inset: 0; display: grid; place-items: center; color: var(--haze); font: 12px var(--font-mono); }
+.card-thumbs { display: flex; gap: 6px; }
+.card-thumbs button { width: 46px; height: 46px; padding: 0; border-radius: 8px; overflow: hidden; border: 2px solid transparent; background: var(--ink); cursor: pointer; }
+.card-thumbs button[aria-pressed="true"] { border-color: var(--ember); }
+.card-thumbs img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
 .status { margin-top: 22px; font-family: var(--font-mono); font-size: 14px; color: var(--ink-soft); }
 .status:empty { display: none; }
 @media (max-width: 700px) {
@@ -436,6 +470,17 @@ footer p { margin: 0; max-width: 60ch; }
       <label for="a-s2"><span id="l-s2">Price</span><input id="a-s2" maxlength="24"></label>
       <label for="a-ep">Episode (optional)<input id="a-ep" maxlength="20" placeholder="Ep. 04"></label>
       <label for="a-note" class="two">Your take<textarea id="a-note" rows="2" maxlength="400" placeholder="How it looked, smelled, hit, and whether it's worth it."></textarea></label>
+      <div class="wide photo-field">
+        <span class="tag" style="color:var(--ink-soft)">Photos (up to 4)</span>
+        <div class="photo-row" id="photoRow">
+          <label class="drop" id="drop" for="a-photos">
+            <input id="a-photos" type="file" accept="image/png,image/jpeg,image/webp,image/gif,image/heic" multiple>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h3l2-2h6l2 2h3v12H4z M12 10a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
+            <span>Add photos</span>
+            <small>Tap to pick, or drop them here</small>
+          </label>
+        </div>
+      </div>
       <div class="wide" style="display:grid;gap:6px">
         <span class="tag" style="color:var(--ink-soft)" id="rateLabel">Bam rating (pick one)</span>
         <div class="rate" role="radiogroup" aria-labelledby="rateLabel" id="rate"></div>
@@ -554,7 +599,29 @@ function render() {
       }
       foot.append(row);
     }
-    card.append(top, el("h3", null, r.name || "Untitled"), el("p", null, r.note || ""), foot);
+    const photos = (Array.isArray(r.photos) ? r.photos : []).filter(p => typeof p === "string" && /^[A-Za-z0-9_-]{8,64}$/.test(p)).slice(0, 4);
+    if (photos.length) {
+      card.classList.add("has-photo");
+      const frame = el("div", "card-photo");
+      const main = el("img"); main.alt = `Photo of ${r.name || "the product"}`; main.loading = "lazy"; main.decoding = "async";
+      main.src = "/_blob/" + photos[0];
+      main.onerror = () => { main.remove(); frame.append(el("span", "missing", "Photo unavailable")); };
+      frame.append(main);
+      card.append(frame);
+      if (photos.length > 1) {
+        const strip = el("div", "card-thumbs");
+        photos.forEach((id, i) => {
+          const b = el("button"); b.type = "button"; b.setAttribute("aria-pressed", String(i === 0));
+          b.setAttribute("aria-label", `Show photo ${i + 1} of ${photos.length}`);
+          const im = el("img"); im.src = "/_blob/" + id; im.alt = ""; im.loading = "lazy";
+          b.append(im);
+          b.onclick = () => { main.src = "/_blob/" + id; strip.querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed", String(x === b))); };
+          strip.append(b);
+        });
+        card.append(top, strip);
+      } else card.append(top);
+    } else card.append(top);
+    card.append(el("h3", null, r.name || "Untitled"), el("p", null, r.note || ""), foot);
     wrap.append(card);
   });
   if (!statusEl.dataset.busy) {
@@ -571,9 +638,62 @@ document.querySelectorAll(".filters button[data-f]").forEach(b => b.addEventList
 
 async function removeReview(id) {
   pendingDelete = null;
+  const r = reviews.find(x => x.id === id);
   try { await db.doc("reviews/" + id).delete(); }
-  catch (e) { statusEl.textContent = "Couldn't delete that review. Try again."; }
+  catch (e) { statusEl.textContent = "Couldn't delete that review. Try again."; return; }
+  // clean up the review's photos so they don't use up storage
+  if (assets && r && Array.isArray(r.photos)) {
+    for (const p of r.photos) { try { await assets.delete(p); } catch (_) {} }
+  }
 }
+
+// ---------- Photo picker ----------
+const MAX_PHOTOS = 4;
+let assets = null;
+let picked = [];   // [{blob, url}]
+const photoRow = document.getElementById("photoRow"), drop = document.getElementById("drop"), photoInput = document.getElementById("a-photos");
+
+async function shrink(file) {
+  // Resize to max 1600px and re-encode as JPEG so phone photos upload fast.
+  try {
+    const bmp = await createImageBitmap(file);
+    const scale = Math.min(1, 1600 / Math.max(bmp.width, bmp.height));
+    const c = document.createElement("canvas");
+    c.width = Math.round(bmp.width * scale); c.height = Math.round(bmp.height * scale);
+    c.getContext("2d").drawImage(bmp, 0, 0, c.width, c.height);
+    const blob = await new Promise(res => c.toBlob(res, "image/jpeg", 0.85));
+    return blob || file;
+  } catch (_) { return file; }
+}
+function paintPicked() {
+  photoRow.querySelectorAll(".thumb").forEach(n => n.remove());
+  picked.forEach((p, i) => {
+    const t = el("div", "thumb");
+    const im = el("img"); im.src = p.url; im.alt = `Selected photo ${i + 1}`;
+    const x = el("button", null, "×"); x.type = "button"; x.setAttribute("aria-label", `Remove photo ${i + 1}`);
+    x.onclick = () => { URL.revokeObjectURL(p.url); picked.splice(i, 1); paintPicked(); };
+    t.append(im, x);
+    if (i === 0) t.append(el("span", "cover-tag", "Cover"));
+    photoRow.insertBefore(t, drop);
+  });
+  drop.hidden = picked.length >= MAX_PHOTOS;
+}
+async function addFiles(list) {
+  const files = [...list].filter(f => /^image\//.test(f.type) || /\.(heic|heif)$/i.test(f.name));
+  if (!files.length) { addMsg.textContent = "Those aren't photos. Pick JPG, PNG, WebP or GIF images."; return; }
+  const room = MAX_PHOTOS - picked.length;
+  if (files.length > room) addMsg.textContent = `Only ${MAX_PHOTOS} photos per review. Added the first ${room}.`;
+  for (const f of files.slice(0, room)) {
+    const blob = f.type === "image/gif" ? f : await shrink(f);
+    picked.push({ blob, url: URL.createObjectURL(blob) });
+  }
+  paintPicked();
+}
+photoInput.addEventListener("change", () => { addFiles(photoInput.files); photoInput.value = ""; });
+["dragenter", "dragover"].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add("over"); }));
+["dragleave", "drop"].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove("over"); }));
+drop.addEventListener("drop", e => { if (e.dataTransfer?.files?.length) addFiles(e.dataTransfer.files); });
+function clearPicked() { picked.forEach(p => URL.revokeObjectURL(p.url)); picked = []; paintPicked(); }
 
 // ---------- Add panel ----------
 const panel = document.getElementById("addPanel");
@@ -610,7 +730,7 @@ function openPanel(open) {
   if (open) { if (filter !== "all") catSel.value = filter; paintSpecLabels(); document.getElementById("a-name").focus(); }
 }
 toggle.onclick = () => openPanel(panel.hidden);
-document.getElementById("addCancel").onclick = () => { panel.reset(); rating = 0; paintRate(); openPanel(false); };
+document.getElementById("addCancel").onclick = () => { panel.reset(); rating = 0; paintRate(); clearPicked(); openPanel(false); };
 
 panel.addEventListener("submit", async e => {
   e.preventDefault();
@@ -627,13 +747,33 @@ panel.addEventListener("submit", async e => {
     createdAt: Date.now(),
   };
   addBtn.disabled = true; addMsg.textContent = "Saving…";
+  const uploaded = [];
   try {
+    if (picked.length) {
+      if (!assets) throw { code: "no_assets" };
+      for (let i = 0; i < picked.length; i++) {
+        addMsg.textContent = `Uploading photo ${i + 1} of ${picked.length}…`;
+        const res = await assets.upload(picked[i].blob, { type: picked[i].blob.type || "image/jpeg" });
+        uploaded.push(res.id);
+      }
+      doc.photos = uploaded;
+      addMsg.textContent = "Saving…";
+    }
     await db.collection("reviews").add(doc);
-    panel.reset(); rating = 0; paintRate(); openPanel(false);
+    panel.reset(); rating = 0; paintRate(); clearPicked(); openPanel(false);
     if (filter !== "all" && filter !== cat) document.querySelector(`.filters button[data-f="all"]`).click();
   } catch (err) {
     addBtn.disabled = false;
-    addMsg.textContent = err && err.code === "quota_exceeded" ? "The review list is full. Delete some old ones first." : "Couldn't save. Check your connection and try again.";
+    // don't leave orphaned photos behind if the review itself didn't save
+    for (const id of uploaded) { try { await assets.delete(id); } catch (_) {} }
+    const c = err && err.code;
+    addMsg.textContent =
+      c === "quota_exceeded" ? "The review list is full. Delete some old ones first." :
+      c === "too_large" ? "One of those photos is too big (20 MB max). Try a smaller one." :
+      c === "unsupported_type" ? "One of those photos is a format we can't use. Try JPG or PNG." :
+      c === "quota_or_state" ? "Photo storage is full. Delete some old reviews to free up space." :
+      c === "no_assets" ? "Photo uploads aren't available in this view. Remove the photos or open the page on claude.ai." :
+      "Couldn't save. Check your connection and try again.";
   }
 });
 paintRate(); paintSpecLabels();
@@ -652,6 +792,8 @@ paintRate(); paintSpecLabels();
   try { w = user ? (user.canEdit ? await user.canEdit() : null) : null; } catch (_) {}
   canWrite = w === true || (user && (await user.isOwner?.())) === true;
   toggle.hidden = !canWrite;
+  if (canWrite) { assets = await window.claude.use("assets"); }
+  if (!assets) document.querySelector(".photo-field").hidden = true;
   db.collection("reviews").orderBy("createdAt", "desc").onSnapshot(snap => {
     reviews = snap.docs.map(d => ({ id: d.id, ...d.data() })).filter(r => CATS.includes(r.cat));
     if (!snap.metadata.fromCache) { clearTimeout(loadTimer); delete statusEl.dataset.busy; }

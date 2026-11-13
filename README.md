@@ -11,7 +11,7 @@ Website for **Bam Bam Reviews**, a podcast reviewing cannabis products: flower, 
   - Live: Mon / Wed / Fri, 8–9 PM, plus every other Saturday 7–9 PM (starting Nov 14, 2026)
   - Radio: Tue / Thu / Sun, 9–10 PM, plus the alternate Saturdays 7–9 PM (starting Nov 21, 2026)
   - Times are set in UTC-7 and shown in each visitor's own time zone
-- **Reviews**: cards rated 1–5 on the Bam Scale, filterable by category, with add and delete for the hosts
+- **Reviews**: cards rated 1–5 on the Bam Scale, filterable by category, with add (including up to 4 photos) and delete for the hosts
 - **Hosts** and **Send us gear** pitch form
 
 ## Files
@@ -25,7 +25,7 @@ Website for **Bam Bam Reviews**, a podcast reviewing cannabis products: flower, 
 
 The site was built to run as a Claude artifact. Two features use platform services that only exist there:
 
-- **Saving reviews** (add/delete) uses the artifact's built-in database.
+- **Saving reviews** (add/delete) uses the artifact's built-in database, and **review photos** use its file storage.
 - **The spoken intro** uses Claude's text-to-speech voice.
 
 If you host `index.html` somewhere else (GitHub Pages, Netlify, your own domain), the rest of the site works as-is, but those two parts need replacing: reviews with a small backend or a hosted database, and the intro with a recorded audio file.
