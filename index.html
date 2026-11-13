@@ -1060,6 +1060,10 @@ function embedFor(e) {
     return { src: `https://www.youtube.com/embed/${id}?autoplay=1&mute=1`, platform: "YouTube", out: `https://www.youtube.com/watch?v=${id}` };
   if (e.platform === "twitch" && /^[A-Za-z0-9_]{3,25}$/.test(id))
     return { src: `https://player.twitch.tv/?channel=${id}&parent=${location.hostname}&muted=true`, platform: "Twitch", out: `https://www.twitch.tv/${id}` };
+  if (e.platform === "vdo" && /^[A-Za-z0-9_-]{4,40}$/.test(id) && /^[A-Za-z0-9_-]{6,120}$/.test(String(e.audience || ""))) {
+    const v = `https://vdo.ninja/?view=${encodeURIComponent(id)}&audience=${encodeURIComponent(e.audience)}`;
+    return { src: v + "&cleanoutput&autoplay&noheader", platform: "our site", out: v, own: true };
+  }
   if (e.platform === "kick" && /^[A-Za-z0-9_-]{3,30}$/.test(id))
     return { src: `https://player.kick.com/${id}?muted=true`, platform: "Kick", out: `https://kick.com/${id}` };
   return null;
@@ -1068,7 +1072,7 @@ function setupPlayer(embed, chan) {
   PLAYER = embedFor(embed);
   const out = document.getElementById("playerOut");
   const link = PLAYER ? PLAYER.out : chan.link;
-  if (link) { out.href = link; out.hidden = false; document.getElementById("playerPlat").textContent = PLAYER ? PLAYER.platform : chan.platform; }
+  if (link && !(PLAYER && PLAYER.own)) { out.href = link; out.hidden = false; document.getElementById("playerPlat").textContent = PLAYER ? PLAYER.platform : chan.platform; }
   if (!PLAYER) return;
   const idle = document.getElementById("screenIdle");
   if (window.claude) { // inside claude.ai, outside players can't load: offer the link instead
