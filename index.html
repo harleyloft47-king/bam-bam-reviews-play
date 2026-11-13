@@ -47,6 +47,9 @@ nav .wrap { display: flex; align-items: center; justify-content: space-between; 
 nav ul { list-style: none; display: flex; gap: 22px; margin: 0; padding: 0; font-weight: 500; flex-wrap: wrap; }
 nav ul a { text-decoration: none; border-bottom: 2px solid transparent; }
 nav ul a:hover { border-color: var(--ember); }
+nav ul a.admin-btn { display: inline-flex; align-items: center; gap: 6px; border: 2px solid var(--ink); border-radius: 999px; padding: 3px 12px; font-size: 14px; }
+nav ul a.admin-btn:hover { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+nav ul a.admin-btn svg { width: 14px; height: 14px; }
 
 /* Hero */
 .hero { padding: 28px 0 56px; border-bottom: 2px solid var(--ink); }
@@ -368,6 +371,7 @@ footer p { margin: 0; max-width: 60ch; }
     <li><a href="#scale">The Bam Scale</a></li>
     <li><a href="#hosts">Hosts</a></li>
     <li><a href="#submit">Send us gear</a></li>
+    <li><a class="admin-btn" href="https://claude.ai/artifact/T5AUXh92bcsSRFR4CXAyfM" target="_blank" rel="noopener" title="For Bam Bam hosts only"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 11V8a5 5 0 0 1 10 0v3M5 11h14v10H5z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>Admin</a></li>
   </ul>
 </div></nav>
 
