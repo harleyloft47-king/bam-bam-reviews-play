@@ -59,6 +59,12 @@ ol li::marker { font-weight: 700; color: var(--ember); }
 .hint { margin: 0; color: var(--ink-soft); font-size: 14px; }
 .mono { font: 13px var(--font-mono); background: var(--paper); border: 1.5px dashed var(--ink); border-radius: 8px; padding: 6px 8px; word-break: break-all; }
 .warn { border-color: var(--ember); }
+.link-state { border-radius: 14px; padding: 14px 16px; display: grid; gap: 8px; border: 3px solid var(--ember); background: #fff3ee; }
+.link-state.ok { border-color: #2f7d4f; background: #eef7f0; }
+.link-state h2 { font-size: 18px; margin: 0; }
+.link-state p { margin: 0; font-size: 15px; }
+.link-state input { width: 100%; padding: 9px 10px; border: 2px solid var(--ink); border-radius: 10px; font: 14px var(--font-mono); background: #fff; }
+.link-state .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
 @media (max-width: 900px) { main { grid-template-columns: 1fr; } }
 </style>
 </head>
@@ -86,6 +92,19 @@ ol li::marker { font-weight: 700; color: var(--ember); }
   </section>
 
   <aside>
+    <div class="link-state" id="linkState" aria-live="polite">
+      <h2 id="lsTitle">Checking your website…</h2>
+      <p id="lsText"></p>
+      <div id="lsFix" hidden>
+        <p><b>One-time setup:</b> after you press <b>Start</b>, VDO.Ninja shows a <b>viewer link</b> containing <code>audience=</code>. Paste it here:</p>
+        <input id="viewerLink" type="text" spellcheck="false" placeholder="https://vdo.ninja/?view=…&audience=…">
+        <div class="row" style="margin-top:8px">
+          <button class="btn" id="copyFix" type="button">Copy it for your Admin</button>
+          <span class="hint" id="fixMsg"></span>
+        </div>
+        <p class="hint" style="margin-top:6px">Then open your Admin → <b>Live &amp; Radio</b> → <b>Live player on your website</b>, paste, and hit <b>Save changes</b>. Or just send the link to Claude and say “connect my studio”.</p>
+      </div>
+    </div>
     <div class="card">
       <h2>How it works</h2>
       <ol>
@@ -141,6 +160,36 @@ $("resetBtn").addEventListener("click", () => {
   studio = { id: "bambam_" + randomId(8), key: randomId(28) }; save(studio); $("sid").textContent = studio.id;
   armed = false; $("resetBtn").textContent = "Make a new key"; $("resetMsg").textContent = "New key made. Go live once and paste the new viewer link into your Admin.";
 });
+// Is the website's player pointed at THIS studio?
+async function checkLink() {
+  const box = $("linkState");
+  try {
+    const r = await fetch("content.json?v=" + Date.now(), { cache: "no-store" });
+    const c = await r.json();
+    const e = c && c.schedule && c.schedule.live && c.schedule.live.embed;
+    if (e && e.platform === "vdo" && e.id === studio.id) {
+      box.classList.add("ok"); $("lsTitle").textContent = "✓ Connected to your website";
+      $("lsText").textContent = "When you go live here, your stream plays in the Watch Bam Bam Live player on the front page."; $("lsFix").hidden = true;
+    } else {
+      box.classList.remove("ok"); $("lsTitle").textContent = "⚠ Not connected to your website yet";
+      $("lsText").textContent = e && e.platform === "vdo"
+        ? "Your website's player is set to a different studio (another browser or an old key). Connect this one so viewers see you."
+        : "You can broadcast, but the front page won't show it until this studio is connected.";
+      $("lsFix").hidden = false;
+    }
+  } catch (_) { $("lsTitle").textContent = "Couldn't check your website"; $("lsText").textContent = "Check your connection and reload."; }
+}
+checkLink();
+$("viewerLink").addEventListener("input", () => {
+  const v = $("viewerLink").value.trim(); let ok = false;
+  try { const u = new URL(v); ok = /vdo\.ninja$/i.test(u.hostname) && u.searchParams.get("view") === studio.id && !!u.searchParams.get("audience"); } catch (_) {}
+  $("fixMsg").textContent = !v ? "" : ok ? "✓ That's the right link." : "That doesn't look like this studio's viewer link (it should have view=" + studio.id + " and audience=).";
+});
+$("copyFix").addEventListener("click", async () => {
+  try { await navigator.clipboard.writeText($("viewerLink").value.trim()); $("fixMsg").textContent = "Copied. Paste it in your Admin."; }
+  catch (_) { $("fixMsg").textContent = "Couldn't copy. Select the link and copy it."; }
+});
+
 window.addEventListener("beforeunload", e => { if ($("screen").querySelector("iframe")) { e.preventDefault(); e.returnValue = ""; } });
 </script>
 </body>
