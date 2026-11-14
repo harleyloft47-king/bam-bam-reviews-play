@@ -118,7 +118,7 @@ ol li::marker { font-weight: 700; color: var(--ember); }
       <h2>Your studio on this device</h2>
       <p class="hint">Stream ID</p>
       <div class="mono" id="sid"></div>
-      <p class="hint">Your private publishing key is saved only in this browser. Nobody can broadcast to your site without it, and it's never put on the website.</p>
+      <p class="hint">Your private publishing key comes from your Admin's Go Live button and is never put on the website. Nobody can broadcast to your site without it.</p>
       <button class="btn" id="resetBtn" type="button">Make a new key</button>
       <p class="hint" id="resetMsg" aria-live="polite"></p>
     </div>
@@ -137,6 +137,14 @@ function randomId(n) { const a = new Uint8Array(n); crypto.getRandomValues(a); r
 function load() { try { return JSON.parse(localStorage.getItem(KEY) || "null"); } catch (_) { return null; } }
 function save(v) { try { localStorage.setItem(KEY, JSON.stringify(v)); } catch (_) {} }
 let studio = load();
+// The admin's Go Live button passes the studio's ID and key in the link (#sid=…&key=…),
+// so every device uses the same connected studio. Read it, save it, then wipe it from the address bar.
+(() => {
+  const h = new URLSearchParams(location.hash.slice(1));
+  const sid = h.get("sid"), key = h.get("key");
+  if (sid && key && /^[A-Za-z0-9_-]{4,40}$/.test(sid) && /^[A-Za-z0-9_-]{16,80}$/.test(key)) { studio = { id: sid, key }; save(studio); }
+  if (location.hash) history.replaceState(null, "", location.pathname + location.search);
+})();
 if (!studio || !studio.id || !studio.key) { studio = { id: "bambam_" + randomId(8), key: randomId(28) }; save(studio); }
 $("sid").textContent = studio.id;
 
