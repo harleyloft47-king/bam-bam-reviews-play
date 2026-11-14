@@ -128,7 +128,7 @@
     let me = cfg.account || null, myKey = null;
     if (me && !hostKey) { try { myKey = await Account.signer(me); } catch (_) { me = null; } }
 
-    const st = { items: [], byId: new Map(), mutedA: new Set(), bannedA: new Set(), deleted: new Set(), locked: false, histTs: 0, accounts: new Map() };
+    const st = { items: [], byId: new Map(), mutedA: new Set(), bannedA: new Set(), removedA: new Set(), deleted: new Set(), locked: false, histTs: 0, accounts: new Map() };
     const seen = new Set();
     const isHost = !!hostKey;
 
@@ -155,12 +155,12 @@
     function view() {
       return {
         locked: st.locked, isHost, connected: clients.some(c => c.up), me,
-        banned: !!(me && st.bannedA.has(me.id)), mutedMe: !!(me && st.mutedA.has(me.id)),
-        messages: st.items.filter(m => !st.deleted.has(m.id) && !(m.t === "m" && (st.mutedA.has(m.a) || st.bannedA.has(m.a)))),
+        banned: !!(me && st.bannedA.has(me.id)), mutedMe: !!(me && st.mutedA.has(me.id)), removed: !!(me && st.removedA.has(me.id)),
+        messages: st.items.filter(m => !st.deleted.has(m.id) && !(m.t === "m" && (st.mutedA.has(m.a) || st.bannedA.has(m.a) || st.removedA.has(m.a)))),
       };
     }
     function accounts() {
-      return [...st.accounts.values()].map(a => Object.assign({}, a, { muted: st.mutedA.has(a.id), banned: st.bannedA.has(a.id) }))
+      return [...st.accounts.values()].filter(a => !st.removedA.has(a.id)).map(a => Object.assign({}, a, { muted: st.mutedA.has(a.id), banned: st.bannedA.has(a.id) }))
         .sort((x, y) => (y.lastSeen || 0) - (x.lastSeen || 0));
     }
     async function viewerMsg(o) {
@@ -180,6 +180,7 @@
         const id = await accountIdFor(o.k);
         if (topic !== T_ACCT + id || o.a !== id) return;
         const n = clean(o.n, NAME_MAX); if (!n) return;
+        if (st.removedA.has(id)) return;
         touchAccount(id, n, { x: o.k.x, y: o.k.y }, Number(o.ts) || 0, { created: Number(o.created) || 0 });
         return changed();
       }
@@ -188,6 +189,8 @@
         st.histTs = o.ts;
         st.mutedA = new Set((o.mutedA || []).map(String));
         st.bannedA = new Set((o.bannedA || []).map(String));
+        st.removedA = new Set((o.removedA || []).map(String));
+        st.removedA.forEach(id => st.accounts.delete(id));
         (o.deleted || []).forEach(id => st.deleted.add(String(id)));
         st.locked = !!o.lock;
         for (const m of (o.items || [])) {
@@ -210,6 +213,7 @@
       else if (o.t === "unmute") st.mutedA.delete(String(o.a));
       else if (o.t === "ban") st.bannedA.add(String(o.a));
       else if (o.t === "unban") st.bannedA.delete(String(o.a));
+      else if (o.t === "remove") { st.removedA.add(String(o.a)); st.accounts.delete(String(o.a)); }
       else if (o.t === "lock") st.locked = !!o.on;
       else if (o.t === "clear") st.items.forEach(m => st.deleted.add(m.id));
       changed();
@@ -217,7 +221,7 @@
 
     const clients = BROKERS.map(url => new Mini(url, onRaw, () => { changed(); if (me && myKey) register(); }));
     clients.forEach(c => { c.subscribe(T_LIVE); c.subscribe(T_HIST); if (isHost || cfg.onAccounts) c.subscribe(T_ACCT + "+"); });
-    const send = (topic, obj, retain) => { const s = JSON.stringify(obj); let ok = false; clients.forEach(c => { ok = c.publish(topic, s, retain) || ok; }); return ok; };
+    const send = (topic, obj, retain) => { const s = obj === "" ? "" : JSON.stringify(obj); let ok = false; clients.forEach(c => { ok = c.publish(topic, s, retain) || ok; }); return ok; };
     const newId = () => Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
     async function signAs(key, o) { o.sig = b64u(await crypto.subtle.sign(SIGN, key, enc.encode(body(o)))); return o; }
 
@@ -236,7 +240,7 @@
     async function publishHist() {
       if (!hostKey) return;
       const items = st.items.filter(m => !st.deleted.has(m.id)).slice(-60);
-      const o = await signAs(hostKey, { t: "hist", ts: Date.now(), items, mutedA: [...st.mutedA], bannedA: [...st.bannedA], deleted: [...st.deleted].slice(-300), lock: st.locked });
+      const o = await signAs(hostKey, { t: "hist", ts: Date.now(), items, mutedA: [...st.mutedA], bannedA: [...st.bannedA], removedA: [...st.removedA].slice(-1000), deleted: [...st.deleted].slice(-300), lock: st.locked });
       st.histTs = o.ts;
       send(T_HIST, o, true);
     }
@@ -272,6 +276,10 @@
           o.a = String(arg);
           if (action === "mute") st.mutedA.add(o.a); else if (action === "unmute") st.mutedA.delete(o.a);
           else if (action === "ban") st.bannedA.add(o.a); else st.bannedA.delete(o.a);
+        }
+        else if (action === "remove") {
+          o.a = String(arg); st.removedA.add(o.a); st.accounts.delete(o.a); st.mutedA.delete(o.a); st.bannedA.delete(o.a);
+          send(T_ACCT + o.a, "", true); // clear that account's saved sign-up from the chat servers
         }
         else if (action === "lock") { o.on = !!arg; st.locked = !!arg; }
         else if (action === "clear") st.items.forEach(m => st.deleted.add(m.id));

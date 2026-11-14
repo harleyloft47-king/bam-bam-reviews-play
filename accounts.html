@@ -89,7 +89,7 @@ h1 { font-family: var(--font-display); font-weight: 400; font-size: 40px; line-h
 <main>
   <div>
     <h1>Accounts</h1>
-    <p class="lede">Everyone who has made a Bam Bam account. Mute hides someone's chat messages. Ban hides their messages and shows them a "banned" screen on the site. Both follow the account even if they change their name.</p>
+    <p class="lede">Everyone who has made a Bam Bam account. Mute hides someone's chat messages. Ban hides their messages and shows them a "banned" screen on the site. Both follow the account even if they change their name. Delete removes an account for good (handy for test accounts): it disappears from this list, and if that person comes back, their account is wiped and they'd have to make a new one.</p>
   </div>
   <p class="note" id="needKey" hidden>To mute or ban, open this page from your Admin (<b>Accounts → Open account tracker</b>) or from your studio. You can still look around.</p>
   <div class="tiles">
@@ -176,7 +176,12 @@ function render() {
         if (bn.classList.contains("armed")) return C.mod("ban", a.id);
         bn.classList.add("armed"); bn.textContent = "Tap again to ban"; setTimeout(() => { bn.classList.remove("armed"); bn.textContent = "Ban"; }, 3500);
       };
-      acts.append(mu, bn);
+      const del = el("button", "btn danger", "Delete"); del.type = "button"; del.title = "Delete this account";
+      del.onclick = () => {
+        if (del.classList.contains("armed")) { open.delete(a.id); C.mod("remove", a.id); return; }
+        del.classList.add("armed"); del.textContent = "Tap again to delete"; setTimeout(() => { del.classList.remove("armed"); del.textContent = "Delete"; }, 3500);
+      };
+      acts.append(mu, bn, del);
     }
     r.append(who, meta, acts);
     if (open.has(a.id)) {

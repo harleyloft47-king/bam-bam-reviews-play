@@ -734,6 +734,12 @@ function showName() {
   document.getElementById("joinRow").hidden = has; document.getElementById("whoRow").hidden = !has; document.getElementById("sayRow").hidden = !has;
   if (has) { document.getElementById("whoName").textContent = ME.name; document.getElementById("whoId").textContent = "#" + ME.id.slice(1, 5); }
 }
+function checkRemoved(v) {
+  if (!v || !v.removed || !ME) return;
+  try { localStorage.removeItem("bambam-account"); } catch (_) {}
+  ME = null; if (CHAT) CHAT.setAccount(null); showName();
+  chatNote("Your account was removed by the hosts. Create a new one to chat.");
+}
 function checkBanned(v) {
   const banned = !!(v && v.banned);
   document.getElementById("bannedGate").hidden = !banned;
@@ -744,7 +750,7 @@ async function startChat(c) {
   const cfg = c && c.schedule && c.schedule.live && c.schedule.live.chat;
   if (window.claude) { chatNote("Live chat works on the public website."); document.getElementById("chatDot").textContent = "Off"; document.getElementById("joinBtn").disabled = true; document.getElementById("chatMic").hidden = true; return; }
   if (!cfg || !window.BamChat) { box.hidden = true; document.querySelector(".live-wrap").style.gridTemplateColumns = "1fr"; return; }
-  CHAT = await BamChat.createChat({ room: cfg.room, pub: cfg.pub, account: ME, onUpdate: v => { renderChat(v); checkBanned(v); } });
+  CHAT = await BamChat.createChat({ room: cfg.room, pub: cfg.pub, account: ME, onUpdate: v => { renderChat(v); checkBanned(v); checkRemoved(v); } });
   if (!CHAT) { chatNote("Chat isn't available in this browser."); return; }
   showName(); renderChat(CHAT.view());
   BamChat.dictate(document.getElementById("chatText"), document.getElementById("chatMic"), chatNote);
