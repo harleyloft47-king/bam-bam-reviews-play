@@ -174,7 +174,12 @@
           "mins": 60,
           "start": "20:00"
         }
-      ]
+      ],
+      "embed": {
+        "platform": "vdo",
+        "id": "bambam_xp7kmvzi",
+        "audience": "vuJ9bR1CZ0HgfS1E"
+      }
     },
     "radio": {
       "alt": {
@@ -230,6 +235,6 @@
       "spotify": ""
     }
   },
-  "updatedAt": "2026-11-13T00:00:00Z",
+  "updatedAt": "2026-11-14T11:05:00Z",
   "version": 1
 }
