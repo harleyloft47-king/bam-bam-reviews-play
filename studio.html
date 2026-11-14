@@ -88,6 +88,13 @@ ol li::marker { font-weight: 700; color: var(--ember); }
 .hchat .muted-list { font-size: 13px; color: var(--ink-soft); }
 .hchat .muted-list button { font: inherit; background: none; border: 0; text-decoration: underline; cursor: pointer; padding: 0 2px; }
 .btn.on { background: var(--ember); border-color: var(--ember); }
+.mic-btn { flex: none; width: 42px; height: 42px; padding: 0 !important; display: inline-grid; place-items: center; border-radius: 50% !important; border: 2px solid var(--ink) !important; background: var(--paper) !important; color: var(--ink) !important; cursor: pointer; }
+.mic-btn svg { width: 20px; height: 20px; }
+.mic-btn:hover { background: var(--haze) !important; }
+.mic-btn.listening { background: var(--ember) !important; border-color: var(--ember) !important; animation: micpulse 1.2s ease-in-out infinite; }
+.mic-btn[hidden] { display: none !important; }
+@keyframes micpulse { 50% { box-shadow: 0 0 0 7px rgba(228,87,46,.25); } }
+@media (prefers-reduced-motion: reduce) { .mic-btn.listening { animation: none; } }
 @media (max-width: 900px) { main { grid-template-columns: 1fr; } }
 </style>
 </head>
@@ -162,6 +169,7 @@ ol li::marker { font-weight: 700; color: var(--ember); }
     </div>
     <div class="hchat-list" id="hList" aria-live="polite"></div>
     <form class="hchat-form" id="hForm" autocomplete="off">
+      <button type="button" class="mic-btn" id="hMic" aria-label="Talk to type" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3zM6 11a6 6 0 0 0 12 0M12 17v4M9 21h6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
       <input id="hText" maxlength="400" placeholder="Reply to chat as Bam Bam…" aria-label="Your message">
       <button type="submit">Send</button>
     </form>
@@ -281,6 +289,8 @@ async function startHostChat() {
   if (!HC) { $("hDot").textContent = "Chat isn't available in this browser"; return; }
   if (!HC.view().isHost) { $("hText").disabled = true; $("hText").placeholder = "Open the studio from your Admin's Go Live button to reply as the host"; }
   renderHost(HC.view());
+  if (HC.view().isHost) BamChat.dictate($("hText"), $("hMic"), t => { $("hDot").textContent = t; });
+  else $("hMic").hidden = true;
 }
 $("hForm").addEventListener("submit", async e => {
   e.preventDefault(); if (!HC) return;

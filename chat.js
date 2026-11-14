@@ -283,5 +283,44 @@
     };
   }
 
-  window.BamChat = { createChat, Account, NAME_MAX, TEXT_MAX, reserved, validName };
+  // ---------- talk-to-text (browser speech recognition) ----------
+  // Fills the box with what you say; you still press Send, so nothing goes out by accident.
+  function dictate(input, button, onNote) {
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR || !input || !button) { if (button) button.hidden = true; return null; }
+    let rec = null, listening = false, base = "";
+    const setUI = on => {
+      listening = on; button.classList.toggle("listening", on);
+      button.setAttribute("aria-pressed", String(on));
+      button.setAttribute("aria-label", on ? "Stop talking" : "Talk to type");
+      button.title = on ? "Listening… tap to stop" : "Talk to type";
+    };
+    function stop() { if (rec) { try { rec.stop(); } catch (_) {} } }
+    button.addEventListener("click", () => {
+      if (listening) return stop();
+      rec = new SR();
+      rec.lang = navigator.language || "en-US";
+      rec.interimResults = true; rec.continuous = false; rec.maxAlternatives = 1;
+      base = input.value ? input.value.replace(/\s*$/, " ") : "";
+      rec.onresult = e => {
+        let text = "";
+        for (let i = 0; i < e.results.length; i++) text += e.results[i][0].transcript;
+        input.value = (base + text).slice(0, input.maxLength > 0 ? input.maxLength : 400);
+        input.dispatchEvent(new Event("input", { bubbles: true }));
+      };
+      rec.onerror = e => {
+        const m = e.error === "not-allowed" || e.error === "service-not-allowed" ? "Allow the microphone to talk to type."
+          : e.error === "no-speech" ? "Didn't catch that. Tap the mic and try again."
+          : e.error === "network" ? "Talk-to-type needs an internet connection." : "";
+        if (m && onNote) onNote(m);
+      };
+      rec.onend = () => { setUI(false); input.focus(); };
+      try { rec.start(); setUI(true); if (onNote) onNote("Listening… talk now, then hit Send."); }
+      catch (_) { setUI(false); }
+    });
+    setUI(false); button.hidden = false;
+    return { stop };
+  }
+
+  window.BamChat = { createChat, Account, NAME_MAX, TEXT_MAX, reserved, validName, dictate };
 })();

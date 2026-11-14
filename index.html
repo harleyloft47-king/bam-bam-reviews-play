@@ -247,7 +247,9 @@ body.gated { overflow: hidden; }
 .chat-msg.host b { color: var(--ember); }
 .host-badge { display: inline-block; width: auto; font: 10px var(--font-mono); background: var(--ember); color: var(--ink); border-radius: 4px; padding: 1px 5px; margin-right: 6px; text-transform: uppercase; letter-spacing: .05em; vertical-align: 1px; }
 .chat-empty { margin: auto; text-align: center; color: var(--ink-soft); font-size: 14px; padding: 20px; }
-.chat-form { border-top: 2px solid var(--ink); padding: 10px; display: grid; gap: 8px; background: var(--paper-2); }
+.chat-form { border-top: 2px solid var(--ink); padding: 10px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; background: var(--paper-2); }
+.chat-form .row { min-width: 0; align-items: center; }
+.chat-form .who { min-width: 0; }
 .chat-form .row { display: flex; gap: 8px; }
 .chat-form input { flex: 1; min-width: 0; font: 15px var(--font-body); padding: 9px 11px; border: 2px solid var(--ink); border-radius: 10px; background: #fff; color: var(--ink); }
 .chat-form input:focus { outline: none; border-color: var(--ember); }
@@ -255,6 +257,13 @@ body.gated { overflow: hidden; }
 .chat-form button:hover { background: var(--ember); border-color: var(--ember); color: var(--ink); }
 .chat-form .who { font-size: 13px; color: var(--ink-soft); display: flex; justify-content: space-between; gap: 8px; }
 .chat-form .who button { white-space: nowrap; background: none; border: 0; color: var(--ink); text-decoration: underline; padding: 0; font-size: 13px; font-weight: 500; }
+.mic-btn { flex: none; width: 42px; height: 42px; padding: 0 !important; display: inline-grid; place-items: center; border-radius: 50% !important; border: 2px solid var(--ink) !important; background: var(--paper) !important; color: var(--ink) !important; cursor: pointer; }
+.mic-btn svg { width: 20px; height: 20px; }
+.mic-btn:hover { background: var(--haze) !important; }
+.mic-btn.listening { background: var(--ember) !important; border-color: var(--ember) !important; animation: micpulse 1.2s ease-in-out infinite; }
+.mic-btn[hidden] { display: none !important; }
+@keyframes micpulse { 50% { box-shadow: 0 0 0 7px rgba(228,87,46,.25); } }
+@media (prefers-reduced-motion: reduce) { .mic-btn.listening { animation: none; } }
 .chat-note { font-size: 13px; color: var(--ink-soft); min-height: 1.2em; margin: 0; }
 @media (max-width: 980px) { .live-wrap { grid-template-columns: 1fr; } .chat { min-height: 360px; max-height: 480px; } }
 
@@ -544,6 +553,7 @@ footer p { margin: 0; max-width: 60ch; }
       <div class="row" id="joinRow"><button type="button" id="joinBtn" style="flex:1">Create an account to chat</button></div>
       <div class="who" id="whoRow" hidden><span>Chatting as <b id="whoName"></b> <span class="acct-tag" id="whoId"></span></span><button type="button" id="acctBtn">My account</button></div>
       <div class="row" id="sayRow" hidden>
+        <button type="button" class="mic-btn" id="chatMic" aria-label="Talk to type" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3zM6 11a6 6 0 0 0 12 0M12 17v4M9 21h6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
         <input id="chatText" maxlength="200" placeholder="Say something…" aria-label="Chat message">
         <button type="submit">Send</button>
       </div>
@@ -732,11 +742,12 @@ function checkBanned(v) {
 async function startChat(c) {
   const box = document.getElementById("chat");
   const cfg = c && c.schedule && c.schedule.live && c.schedule.live.chat;
-  if (window.claude) { chatNote("Live chat works on the public website."); document.getElementById("chatDot").textContent = "Off"; document.getElementById("joinBtn").disabled = true; return; }
+  if (window.claude) { chatNote("Live chat works on the public website."); document.getElementById("chatDot").textContent = "Off"; document.getElementById("joinBtn").disabled = true; document.getElementById("chatMic").hidden = true; return; }
   if (!cfg || !window.BamChat) { box.hidden = true; document.querySelector(".live-wrap").style.gridTemplateColumns = "1fr"; return; }
   CHAT = await BamChat.createChat({ room: cfg.room, pub: cfg.pub, account: ME, onUpdate: v => { renderChat(v); checkBanned(v); } });
   if (!CHAT) { chatNote("Chat isn't available in this browser."); return; }
   showName(); renderChat(CHAT.view());
+  BamChat.dictate(document.getElementById("chatText"), document.getElementById("chatMic"), chatNote);
 }
 // ----- account sign-up / account panel -----
 const acctGate = document.getElementById("acctGate");
