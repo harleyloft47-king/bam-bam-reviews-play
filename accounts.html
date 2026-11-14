@@ -71,6 +71,10 @@ h1 { font-family: var(--font-display); font-weight: 400; font-size: 40px; line-h
 .empty { padding: 30px; text-align: center; border: 2px dashed var(--ink-soft); border-radius: 16px; color: var(--ink-soft); }
 .note { background: #fff3ee; border: 2px solid var(--ember); border-radius: 14px; padding: 12px 14px; }
 .hint { color: var(--ink-soft); font-size: 14px; margin: 0; }
+.row.deleted { opacity: .8; border-style: dashed; }
+.pill.deleted { background: var(--ink-soft); color: #fff; }
+.toast { position: fixed; left: 50%; bottom: 22px; transform: translateX(-50%); background: var(--ink); color: var(--paper); padding: 10px 12px 10px 18px; border-radius: 14px; box-shadow: 5px 5px 0 var(--ember); display: flex; gap: 14px; align-items: center; z-index: 20; max-width: calc(100% - 32px); }
+.toast button { font: 700 14px var(--font-body); padding: 7px 14px; border-radius: 999px; border: 0; background: var(--ember); color: var(--ink); cursor: pointer; }
 @media (max-width: 760px) {
   .tiles { grid-template-columns: repeat(2, 1fr); }
   .row { grid-template-columns: 1fr; }
@@ -105,11 +109,14 @@ h1 { font-family: var(--font-display); font-weight: 400; font-size: 40px; line-h
       <button class="chip" aria-pressed="false" data-f="active">Active</button>
       <button class="chip" aria-pressed="false" data-f="muted">Muted</button>
       <button class="chip" aria-pressed="false" data-f="banned">Banned</button>
+      <button class="chip" aria-pressed="false" data-f="deleted">Deleted <span id="nDel"></span></button>
     </div>
   </div>
   <div class="list" id="list"><div class="empty">Loading accounts…</div></div>
   <p class="hint">Accounts show up here once they've signed up or chatted. New sign-ups appear live while this page is open. Your list is also saved in this browser, so it's here next time.</p>
 </main>
+
+<div class="toast" id="toast" role="status" aria-live="polite" hidden><span id="toastText"></span><button type="button" id="undoBtn">Undo</button></div>
 
 <script src="chat.js"></script>
 <script>
@@ -130,22 +137,32 @@ let ck = "";
 })();
 $("needKey").hidden = !!ck;
 
-const SAVE = "bb-accounts";
+const SAVE = "bb-accounts", SAVE_DEL = "bb-accounts-deleted";
+const strip = a => ({ id: a.id, name: a.name, pub: a.pub, created: a.created, lastSeen: a.lastSeen, reg: a.reg });
 function loadSaved() { try { return JSON.parse(localStorage.getItem(SAVE) || "[]"); } catch (_) { return []; } }
 let saveT = 0;
-function save(list) { clearTimeout(saveT); saveT = setTimeout(() => { try { localStorage.setItem(SAVE, JSON.stringify(list.map(a => ({ id: a.id, name: a.name, pub: a.pub, created: a.created, lastSeen: a.lastSeen })))); } catch (_) {} }, 500); }
+function save(list, del) { clearTimeout(saveT); saveT = setTimeout(() => { try { localStorage.setItem(SAVE, JSON.stringify(list.map(strip))); localStorage.setItem(SAVE_DEL, JSON.stringify(del.filter(a => a.name).map(strip))); } catch (_) {} }, 500); }
+function loadSavedDeleted() { try { return JSON.parse(localStorage.getItem(SAVE_DEL) || "[]"); } catch (_) { return []; } }
+let toastT = 0, undoId = "";
+function showUndo(a) {
+  undoId = a.id; $("toastText").textContent = `Deleted ${a.name || "account"}.`; $("toast").hidden = false;
+  clearTimeout(toastT); toastT = setTimeout(() => { $("toast").hidden = true; undoId = ""; }, 10000);
+}
+$("undoBtn").addEventListener("click", () => { if (undoId && C) C.mod("restore", undoId); $("toast").hidden = true; undoId = ""; });
 
 let C = null, filter = "all", open = new Set();
 function render() {
   if (!C) return;
-  const all = C.accounts(), view = C.view();
-  save(all);
+  const all = C.accounts(), view = C.view(), gone = C.deletedAccounts();
+  save(all, gone);
+  $("nDel").textContent = gone.length ? `(${gone.length})` : "";
   $("conn").textContent = view.connected ? "Live" : "Connecting…"; $("conn").classList.toggle("on", view.connected);
   $("nAll").textContent = all.length;
   $("nActive").textContent = all.filter(a => Date.now() - (a.lastSeen || 0) < DAY).length;
   $("nMuted").textContent = all.filter(a => a.muted).length;
   $("nBanned").textContent = all.filter(a => a.banned).length;
   const q = $("q").value.trim().toLowerCase();
+  if (filter === "deleted") return renderDeleted(gone, q);
   const rows = all.filter(a => {
     if (filter === "active" && !(Date.now() - (a.lastSeen || 0) < DAY)) return false;
     if (filter === "muted" && !a.muted) return false;
@@ -178,7 +195,7 @@ function render() {
       };
       const del = el("button", "btn danger", "Delete"); del.type = "button"; del.title = "Delete this account";
       del.onclick = () => {
-        if (del.classList.contains("armed")) { open.delete(a.id); C.mod("remove", a.id); return; }
+        if (del.classList.contains("armed")) { open.delete(a.id); C.mod("remove", a.id); showUndo(a); return; }
         del.classList.add("armed"); del.textContent = "Tap again to delete"; setTimeout(() => { del.classList.remove("armed"); del.textContent = "Delete"; }, 3500);
       };
       acts.append(mu, bn, del);
@@ -191,6 +208,19 @@ function render() {
       r.append(box);
     }
     list.append(r);
+  });
+}
+function renderDeleted(gone, q) {
+  const list = $("list"); list.replaceChildren();
+  const rows = gone.filter(a => !q || (a.name || "").toLowerCase().includes(q) || a.id.toLowerCase().includes(q));
+  if (!rows.length) { list.append(el("div", "empty", "No deleted accounts.")); return; }
+  rows.forEach(a => {
+    const r = el("div", "row deleted");
+    const who = el("div", "who"); who.append(el("b", null, a.name || "(unknown name)"), el("span", "id", "#" + a.id.slice(1, 5)), el("span", "pill deleted", "Deleted"));
+    const meta = el("div", "meta"); meta.append(el("span", null, "Joined " + fmt(a.created)), el("span", null, "Last seen " + ago(a.lastSeen)), el("span", null, "ID " + a.id));
+    const acts = el("div", "acts");
+    if (ck) { const rs = el("button", "btn", "Restore"); rs.type = "button"; rs.onclick = () => C.mod("restore", a.id); acts.append(rs); }
+    r.append(who, meta, acts); list.append(r);
   });
 }
 $("q").addEventListener("input", render);
@@ -206,7 +236,7 @@ setInterval(render, 30000); // keep "last seen" fresh
   if (!cfg || !window.BamChat) { $("list").replaceChildren(el("div", "empty", "Chat isn't set up on the site yet.")); return; }
   C = await BamChat.createChat({ room: cfg.room, pub: cfg.pub, privD: ck, onUpdate: render, onAccounts: render });
   if (!C) { $("list").replaceChildren(el("div", "empty", "This browser can't run the tracker. Try Chrome, Edge or Firefox.")); return; }
-  C.seedAccounts(loadSaved());
+  C.seedAccounts(loadSaved().concat(loadSavedDeleted()));
   render();
 })();
 </script>

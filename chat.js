@@ -128,7 +128,7 @@
     let me = cfg.account || null, myKey = null;
     if (me && !hostKey) { try { myKey = await Account.signer(me); } catch (_) { me = null; } }
 
-    const st = { items: [], byId: new Map(), mutedA: new Set(), bannedA: new Set(), removedA: new Set(), deleted: new Set(), locked: false, histTs: 0, accounts: new Map() };
+    const st = { items: [], byId: new Map(), mutedA: new Set(), bannedA: new Set(), removedA: new Set(), deleted: new Set(), locked: false, histTs: 0, accounts: new Map(), removedInfo: new Map() };
     const seen = new Set();
     const isHost = !!hostKey;
 
@@ -144,6 +144,8 @@
       if (ts > (a.lastSeen || 0)) a.lastSeen = ts;
       if (extra && extra.created && (!a.created || extra.created < a.created)) a.created = extra.created;
       if (extra && extra.msg) a.messages = (a.messages || 0) + 1;
+      if (extra && extra.reg) a.reg = extra.reg;
+      if (st.removedA.has(id)) { st.removedInfo.set(id, Object.assign(st.removedInfo.get(id) || {}, a)); return; }
       st.accounts.set(id, a);
     }
     let pending = 0, accTimer = 0;
@@ -158,6 +160,12 @@
         banned: !!(me && st.bannedA.has(me.id)), mutedMe: !!(me && st.mutedA.has(me.id)), removed: !!(me && st.removedA.has(me.id)),
         messages: st.items.filter(m => !st.deleted.has(m.id) && !(m.t === "m" && (st.mutedA.has(m.a) || st.bannedA.has(m.a) || st.removedA.has(m.a)))),
       };
+    }
+    function removeAcct(id) { const a = st.accounts.get(id); if (a) st.removedInfo.set(id, a); st.accounts.delete(id); }
+    function restoreAcct(id) { const a = st.removedInfo.get(id); if (a) st.accounts.set(id, a); st.removedInfo.delete(id); }
+    function deletedAccounts() {
+      return [...st.removedA].map(id => Object.assign({ id, name: "", lastSeen: 0 }, st.removedInfo.get(id) || {}, { deleted: true }))
+        .sort((x, y) => (y.lastSeen || 0) - (x.lastSeen || 0));
     }
     function accounts() {
       return [...st.accounts.values()].filter(a => !st.removedA.has(a.id)).map(a => Object.assign({}, a, { muted: st.mutedA.has(a.id), banned: st.bannedA.has(a.id) }))
@@ -180,8 +188,7 @@
         const id = await accountIdFor(o.k);
         if (topic !== T_ACCT + id || o.a !== id) return;
         const n = clean(o.n, NAME_MAX); if (!n) return;
-        if (st.removedA.has(id)) return;
-        touchAccount(id, n, { x: o.k.x, y: o.k.y }, Number(o.ts) || 0, { created: Number(o.created) || 0 });
+        touchAccount(id, n, { x: o.k.x, y: o.k.y }, Number(o.ts) || 0, { created: Number(o.created) || 0, reg: o });
         return changed();
       }
       if (topic === T_HIST) {
@@ -189,8 +196,10 @@
         st.histTs = o.ts;
         st.mutedA = new Set((o.mutedA || []).map(String));
         st.bannedA = new Set((o.bannedA || []).map(String));
-        st.removedA = new Set((o.removedA || []).map(String));
-        st.removedA.forEach(id => st.accounts.delete(id));
+        const nowRemoved = new Set((o.removedA || []).map(String));
+        [...st.removedA].forEach(id => { if (!nowRemoved.has(id)) restoreAcct(id); });
+        st.removedA = nowRemoved;
+        st.removedA.forEach(removeAcct);
         (o.deleted || []).forEach(id => st.deleted.add(String(id)));
         st.locked = !!o.lock;
         for (const m of (o.items || [])) {
@@ -213,7 +222,8 @@
       else if (o.t === "unmute") st.mutedA.delete(String(o.a));
       else if (o.t === "ban") st.bannedA.add(String(o.a));
       else if (o.t === "unban") st.bannedA.delete(String(o.a));
-      else if (o.t === "remove") { st.removedA.add(String(o.a)); st.accounts.delete(String(o.a)); }
+      else if (o.t === "remove") { st.removedA.add(String(o.a)); removeAcct(String(o.a)); }
+      else if (o.t === "restore") { st.removedA.delete(String(o.a)); restoreAcct(String(o.a)); }
       else if (o.t === "lock") st.locked = !!o.on;
       else if (o.t === "clear") st.items.forEach(m => st.deleted.add(m.id));
       changed();
@@ -248,7 +258,7 @@
 
     let lastSend = 0;
     return {
-      view, accounts,
+      view, accounts, deletedAccounts,
       async say(text) {
         if (Date.now() - lastSend < 1500) return { error: "slow" };
         if (hostKey) {
@@ -278,15 +288,20 @@
           else if (action === "ban") st.bannedA.add(o.a); else st.bannedA.delete(o.a);
         }
         else if (action === "remove") {
-          o.a = String(arg); st.removedA.add(o.a); st.accounts.delete(o.a); st.mutedA.delete(o.a); st.bannedA.delete(o.a);
+          o.a = String(arg); st.removedA.add(o.a); removeAcct(o.a);
           send(T_ACCT + o.a, "", true); // clear that account's saved sign-up from the chat servers
+        }
+        else if (action === "restore") {
+          o.a = String(arg); st.removedA.delete(o.a);
+          const info = st.removedInfo.get(o.a); restoreAcct(o.a);
+          if (info && info.reg) send(T_ACCT + o.a, info.reg, true); // put their original signed sign-up back
         }
         else if (action === "lock") { o.on = !!arg; st.locked = !!arg; }
         else if (action === "clear") st.items.forEach(m => st.deleted.add(m.id));
         send(T_LIVE, await signAs(hostKey, o)); changed(); publishHist();
       },
       setAccount: async a => { me = a; myKey = a ? await Account.signer(a) : null; lastReg = 0; register(); changed(); },
-      seedAccounts(list) { (list || []).forEach(a => { if (a && a.id && /^u[A-Za-z0-9_-]{12}$/.test(a.id)) touchAccount(a.id, clean(a.name, NAME_MAX), a.pub, a.lastSeen || 0, { created: a.created }); }); changed(); },
+      seedAccounts(list) { (list || []).forEach(a => { if (a && a.id && /^u[A-Za-z0-9_-]{12}$/.test(a.id)) touchAccount(a.id, clean(a.name, NAME_MAX), a.pub, a.lastSeen || 0, { created: a.created, reg: a.reg && a.reg.t === "reg" && a.reg.a === a.id ? a.reg : null }); }); changed(); },
       close() { clients.forEach(c => { c.closed = true; try { c.ws.close(); } catch (_) {} }); },
     };
   }

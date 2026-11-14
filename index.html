@@ -730,15 +730,16 @@ function renderChat(v) {
 }
 let ME = window.BamChat ? BamChat.Account.get() : null;
 function showName() {
-  const has = !!ME;
+  const has = !!ME && !REMOVED;
   document.getElementById("joinRow").hidden = has; document.getElementById("whoRow").hidden = !has; document.getElementById("sayRow").hidden = !has;
   if (has) { document.getElementById("whoName").textContent = ME.name; document.getElementById("whoId").textContent = "#" + ME.id.slice(1, 5); }
 }
+let REMOVED = false;
 function checkRemoved(v) {
-  if (!v || !v.removed || !ME) return;
-  try { localStorage.removeItem("bambam-account"); } catch (_) {}
-  ME = null; if (CHAT) CHAT.setAccount(null); showName();
-  chatNote("Your account was removed by the hosts. Create a new one to chat.");
+  const r = !!(v && v.removed);
+  if (r === REMOVED) return;
+  REMOVED = r; showName();
+  chatNote(r ? "Your account was removed by the hosts. Create a new one to chat." : (ME ? "Your account is back. Welcome back, " + ME.name + "!" : ""));
 }
 function checkBanned(v) {
   const banned = !!(v && v.banned);
@@ -771,7 +772,7 @@ document.getElementById("acctForm").addEventListener("submit", async e => {
   const name = document.getElementById("acctName").value.trim(), err = document.getElementById("acctErr");
   if (BamChat.reserved(name)) { err.textContent = "That name is saved for the hosts. Pick another."; return; }
   if (!BamChat.validName(name)) { err.textContent = "Use 3 to 20 letters, numbers, spaces, dots, dashes or underscores."; return; }
-  try { ME = await BamChat.Account.create(name); }
+  try { ME = await BamChat.Account.create(name); REMOVED = false; }
   catch (_) { err.textContent = "Couldn't save your account. Make sure your browser allows site storage."; return; }
   err.textContent = ""; closeAccount(); showName();
   if (CHAT) CHAT.setAccount(ME);
