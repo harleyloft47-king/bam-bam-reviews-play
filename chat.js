@@ -288,35 +288,62 @@
   function dictate(input, button, onNote) {
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SR || !input || !button) { if (button) button.hidden = true; return null; }
-    let rec = null, listening = false, base = "";
+    const note = t => { if (onNote) onNote(t); };
+    let rec = null, listening = false, base = "", started = false, watchdog = 0;
     const setUI = on => {
       listening = on; button.classList.toggle("listening", on);
       button.setAttribute("aria-pressed", String(on));
       button.setAttribute("aria-label", on ? "Stop talking" : "Talk to type");
       button.title = on ? "Listening… tap to stop" : "Talk to type";
     };
+    const blockedMsg = "Your microphone is blocked for this site. Click the lock icon next to the web address, set Microphone to Allow, then reload.";
     function stop() { if (rec) { try { rec.stop(); } catch (_) {} } }
-    button.addEventListener("click", () => {
+    async function askMic() {
+      // Ask for the microphone up front so the browser shows its Allow prompt (speech recognition alone sometimes doesn't).
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return true;
+      try { const s = await navigator.mediaDevices.getUserMedia({ audio: true }); s.getTracks().forEach(t => t.stop()); return true; }
+      catch (e) {
+        if (e && (e.name === "NotAllowedError" || e.name === "SecurityError")) note(blockedMsg);
+        else if (e && e.name === "NotFoundError") note("No microphone found. Plug one in or check your sound settings.");
+        else note("Couldn't open your microphone. Check that no other app is using it.");
+        return false;
+      }
+    }
+    button.addEventListener("click", async () => {
       if (listening) return stop();
-      rec = new SR();
+      if (!window.isSecureContext) return note("Talk-to-type only works on the secure (https) site.");
+      setUI(true); note("Starting the mic…");
+      if (!(await askMic())) return setUI(false);
+      try { rec = new SR(); } catch (_) { setUI(false); return note("Talk-to-type isn't available in this browser. Try Chrome, Edge or Safari."); }
       rec.lang = navigator.language || "en-US";
       rec.interimResults = true; rec.continuous = false; rec.maxAlternatives = 1;
       base = input.value ? input.value.replace(/\s*$/, " ") : "";
+      started = false;
+      rec.onstart = rec.onaudiostart = () => { started = true; clearTimeout(watchdog); note("Listening… talk now, then hit Send."); };
       rec.onresult = e => {
         let text = "";
         for (let i = 0; i < e.results.length; i++) text += e.results[i][0].transcript;
         input.value = (base + text).slice(0, input.maxLength > 0 ? input.maxLength : 400);
         input.dispatchEvent(new Event("input", { bubbles: true }));
       };
+      let errored = false;
       rec.onerror = e => {
-        const m = e.error === "not-allowed" || e.error === "service-not-allowed" ? "Allow the microphone to talk to type."
-          : e.error === "no-speech" ? "Didn't catch that. Tap the mic and try again."
-          : e.error === "network" ? "Talk-to-type needs an internet connection." : "";
-        if (m && onNote) onNote(m);
+        errored = true; clearTimeout(watchdog);
+        note(e.error === "not-allowed" || e.error === "service-not-allowed" ? blockedMsg
+          : e.error === "no-speech" ? "Didn't hear anything. Tap the mic and try again."
+          : e.error === "audio-capture" ? "No microphone found. Plug one in or check your sound settings."
+          : e.error === "network" ? "Talk-to-type couldn't reach the speech service. This browser may not support it (Brave and some others don't). Try Chrome, Edge or Safari."
+          : e.error === "aborted" ? "" : "Talk-to-type stopped (" + e.error + "). Try again.");
       };
-      rec.onend = () => { setUI(false); input.focus(); };
-      try { rec.start(); setUI(true); if (onNote) onNote("Listening… talk now, then hit Send."); }
-      catch (_) { setUI(false); }
+      rec.onend = () => {
+        clearTimeout(watchdog); setUI(false);
+        if (!errored && started && input.value.trim()) note("Got it. Check it, then hit Send.");
+        input.focus();
+      };
+      try { rec.start(); }
+      catch (_) { setUI(false); return note("Couldn't start talk-to-type. Try again."); }
+      // some browsers accept start() but never actually listen; tell the person instead of doing nothing
+      watchdog = setTimeout(() => { if (!started) { stop(); setUI(false); note("Talk-to-type didn't start in this browser. Try Chrome, Edge or Safari, or just type."); } }, 6000);
     });
     setUI(false); button.hidden = false;
     return { stop };
