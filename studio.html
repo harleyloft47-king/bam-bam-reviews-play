@@ -252,17 +252,24 @@ function renderHost(v) {
     txt.append(b, document.createTextNode(m.x)); row.append(txt);
     const acts = document.createElement("div"); acts.className = "acts";
     const del = document.createElement("button"); del.type = "button"; del.textContent = "Delete"; del.onclick = () => HC.mod("del", m.id); acts.append(del);
-    if (m.t === "m") { const mu = document.createElement("button"); mu.type = "button"; mu.textContent = "Mute " + m.n; mu.onclick = () => HC.mod("mute", m.n); acts.append(mu); }
+    if (m.t === "m") {
+      const mu = document.createElement("button"); mu.type = "button"; mu.textContent = "Mute"; mu.title = "Mute " + m.n; mu.onclick = () => HC.mod("mute", m.a); acts.append(mu);
+      const bn = document.createElement("button"); bn.type = "button"; bn.textContent = "Ban"; bn.title = "Ban " + m.n;
+      bn.onclick = () => { if (bn.dataset.armed) { HC.mod("ban", m.a); } else { bn.dataset.armed = "1"; bn.textContent = "Ban? tap again"; setTimeout(() => { delete bn.dataset.armed; bn.textContent = "Ban"; }, 3500); } };
+      acts.append(bn);
+    }
     row.append(acts); list.append(row);
   });
   if (atBottom) list.scrollTop = list.scrollHeight;
   $("hDot").textContent = v.connected ? (v.locked ? "Chat paused" : "Chat live") : "Connecting…";
   $("lockBtn").textContent = v.locked ? "Resume chat" : "Pause chat"; $("lockBtn").classList.toggle("on", v.locked);
   const ml = $("mutedList"); ml.replaceChildren();
-  if (v.muted.length) {
-    ml.append(document.createTextNode("Muted: "));
-    v.muted.forEach(n => { const u = document.createElement("button"); u.type = "button"; u.textContent = n + " ✕"; u.title = "Unmute " + n; u.onclick = () => HC.mod("unmute", n); ml.append(u); });
-  }
+  const accts = HC ? HC.accounts() : [];
+  const muted = accts.filter(a => a.muted), banned = accts.filter(a => a.banned);
+  if (muted.length || banned.length) ml.append(document.createTextNode(`${muted.length} muted, ${banned.length} banned. `));
+  const t = document.createElement("a"); t.href = "accounts.html"; t.target = "_blank"; t.rel = "noopener"; t.textContent = "Open the account tracker ↗";
+  if (studio.ck) t.href = "accounts.html#ck=" + encodeURIComponent(studio.ck);
+  ml.append(t);
 }
 async function startHostChat() {
   let c = null;
@@ -270,14 +277,14 @@ async function startHostChat() {
   const cfg = c && c.schedule && c.schedule.live && c.schedule.live.chat;
   if (!cfg) { $("hDot").textContent = "Chat not set up"; return; }
   if (!studio.ck) { $("hDot").textContent = "Open the studio from your Admin's Go Live button to moderate"; }
-  HC = await BamChat.createChat({ room: cfg.room, pub: cfg.pub, privD: studio.ck || "", onUpdate: renderHost });
+  HC = await BamChat.createChat({ room: cfg.room, pub: cfg.pub, privD: studio.ck || "", onUpdate: renderHost, onAccounts: () => HC && renderHost(HC.view()) });
   if (!HC) { $("hDot").textContent = "Chat isn't available in this browser"; return; }
   if (!HC.view().isHost) { $("hText").disabled = true; $("hText").placeholder = "Open the studio from your Admin's Go Live button to reply as the host"; }
   renderHost(HC.view());
 }
 $("hForm").addEventListener("submit", async e => {
   e.preventDefault(); if (!HC) return;
-  const r = await HC.say("", $("hText").value);
+  const r = await HC.say($("hText").value);
   if (!r.error) $("hText").value = "";
 });
 $("lockBtn").addEventListener("click", () => HC && HC.mod("lock", !HC.view().locked));

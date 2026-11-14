@@ -223,6 +223,10 @@ body.gated { overflow: hidden; }
 .gate-err { font-family: var(--font-mono); font-size: 13px; color: #b3361a !important; min-height: 1.3em; }
 .gate-fine { font-size: 12.5px !important; }
 .gate-denied .big { color: var(--ink); }
+.acct-label { display: grid; gap: 6px; font: 500 12px var(--font-mono); letter-spacing: .06em; text-transform: uppercase; color: var(--ink-soft); }
+.acct-label input { font: 17px var(--font-body); text-transform: none; letter-spacing: 0; padding: 11px 12px; border: 2px solid var(--ink); border-radius: 10px; background: #fff; color: var(--ink); }
+.acct-label input:focus { outline: none; border-color: var(--ember); }
+.acct-tag { font: 11px var(--font-mono); color: var(--ink-soft); }
 
 /* Tune in: live + radio */
 .tune { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
@@ -421,6 +425,42 @@ footer p { margin: 0; max-width: 60ch; }
   </div>
 </div>
 
+<div class="gate" id="acctGate" role="dialog" aria-modal="true" aria-labelledby="acctTitle" hidden>
+  <form class="gate-card" id="acctForm" novalidate>
+    <div class="big" aria-hidden="true" style="font-size:44px">Join</div>
+    <h2 id="acctTitle">Create your Bam Bam account</h2>
+    <p>Pick a username to chat during live shows. No email or password needed. Your account lives on this device.</p>
+    <label class="acct-label" for="acctName">Username
+      <input id="acctName" maxlength="20" autocomplete="nickname" spellcheck="false" placeholder="e.g. StonerSteve">
+    </label>
+    <p class="gate-err" id="acctErr" aria-live="assertive"></p>
+    <div class="gate-actions">
+      <button class="btn primary" type="submit" id="acctGo">Create account</button>
+      <button class="btn" type="button" id="acctLater">Not now</button>
+    </div>
+    <p class="gate-fine">3 to 20 letters, numbers, spaces, dots, dashes or underscores. Be cool: the hosts can mute or ban accounts that cause problems.</p>
+  </form>
+  <div class="gate-card" id="acctPanel" hidden>
+    <h2>Your account</h2>
+    <p>Username: <b id="apName"></b><br>Account ID: <span class="acct-tag" id="apId"></span></p>
+    <label class="acct-label" for="apNew">Change username<input id="apNew" maxlength="20" spellcheck="false"></label>
+    <p class="gate-err" id="apErr" aria-live="assertive"></p>
+    <div class="gate-actions">
+      <button class="btn primary" type="button" id="apSave">Save name</button>
+      <button class="btn" type="button" id="apClose">Close</button>
+    </div>
+    <p class="gate-fine">Clearing your browser data deletes this account.</p>
+  </div>
+</div>
+
+<div class="gate" id="bannedGate" role="alertdialog" aria-modal="true" aria-labelledby="banTitle" hidden>
+  <div class="gate-card gate-denied">
+    <div class="big" aria-hidden="true">Banned</div>
+    <h2 id="banTitle">This account has been banned</h2>
+    <p>The Bam Bam hosts have banned your account from the site and chat.</p>
+  </div>
+</div>
+
 <div class="notice"><div class="wrap"><span>21+ only. Consume responsibly where it's legal.</span><span>New episodes every week</span></div></div>
 
 <nav aria-label="Main"><div class="wrap">
@@ -501,11 +541,9 @@ footer p { margin: 0; max-width: 60ch; }
     <div class="chat-head"><h3>Live chat</h3><span class="chat-dot" id="chatDot">Connecting…</span></div>
     <div class="chat-list" id="chatList" aria-live="polite"><p class="chat-empty" id="chatEmpty">Say hi! Chat with the hosts and other viewers while the show is on.</p></div>
     <form class="chat-form" id="chatForm" autocomplete="off">
-      <div class="row" id="nameRow">
-        <input id="chatName" maxlength="24" placeholder="Pick a chat name" aria-label="Chat name">
-      </div>
-      <div class="who" id="whoRow" hidden><span>Chatting as <b id="whoName"></b></span><button type="button" id="changeName">Change name</button></div>
-      <div class="row">
+      <div class="row" id="joinRow"><button type="button" id="joinBtn" style="flex:1">Create an account to chat</button></div>
+      <div class="who" id="whoRow" hidden><span>Chatting as <b id="whoName"></b> <span class="acct-tag" id="whoId"></span></span><button type="button" id="acctBtn">My account</button></div>
+      <div class="row" id="sayRow" hidden>
         <input id="chatText" maxlength="200" placeholder="Say something…" aria-label="Chat message">
         <button type="submit">Send</button>
       </div>
@@ -680,44 +718,72 @@ function renderChat(v) {
   document.getElementById("chatText").disabled = v.locked;
   document.getElementById("chatText").placeholder = v.locked ? "Chat is paused by the host" : "Say something…";
 }
-function chatName() { try { return localStorage.getItem("bambam-chat-name") || ""; } catch (_) { return ""; } }
+let ME = window.BamChat ? BamChat.Account.get() : null;
 function showName() {
-  const n = chatName();
-  document.getElementById("nameRow").hidden = !!n; document.getElementById("whoRow").hidden = !n;
-  document.getElementById("whoName").textContent = n;
+  const has = !!ME;
+  document.getElementById("joinRow").hidden = has; document.getElementById("whoRow").hidden = !has; document.getElementById("sayRow").hidden = !has;
+  if (has) { document.getElementById("whoName").textContent = ME.name; document.getElementById("whoId").textContent = "#" + ME.id.slice(1, 5); }
+}
+function checkBanned(v) {
+  const banned = !!(v && v.banned);
+  document.getElementById("bannedGate").hidden = !banned;
+  document.body.classList.toggle("gated", banned || !document.getElementById("gate").hidden || !document.getElementById("acctGate").hidden);
 }
 async function startChat(c) {
   const box = document.getElementById("chat");
   const cfg = c && c.schedule && c.schedule.live && c.schedule.live.chat;
-  if (window.claude) { chatNote("Live chat works on the public website."); document.getElementById("chatDot").textContent = "Off"; return; }
+  if (window.claude) { chatNote("Live chat works on the public website."); document.getElementById("chatDot").textContent = "Off"; document.getElementById("joinBtn").disabled = true; return; }
   if (!cfg || !window.BamChat) { box.hidden = true; document.querySelector(".live-wrap").style.gridTemplateColumns = "1fr"; return; }
-  CHAT = await BamChat.createChat({ room: cfg.room, pub: cfg.pub, onUpdate: renderChat });
+  CHAT = await BamChat.createChat({ room: cfg.room, pub: cfg.pub, account: ME, onUpdate: v => { renderChat(v); checkBanned(v); } });
   if (!CHAT) { chatNote("Chat isn't available in this browser."); return; }
   showName(); renderChat(CHAT.view());
 }
+// ----- account sign-up / account panel -----
+const acctGate = document.getElementById("acctGate");
+function openAccount(mode) {
+  acctGate.hidden = false; document.body.classList.add("gated");
+  document.getElementById("acctForm").hidden = mode !== "create";
+  document.getElementById("acctPanel").hidden = mode !== "panel";
+  if (mode === "panel" && ME) { document.getElementById("apName").textContent = ME.name; document.getElementById("apId").textContent = ME.id; document.getElementById("apNew").value = ME.name; }
+  setTimeout(() => document.getElementById(mode === "create" ? "acctName" : "apNew").focus(), 50);
+}
+function closeAccount() { acctGate.hidden = true; document.body.classList.toggle("gated", !document.getElementById("bannedGate").hidden); }
+window.bbAfterAge = () => { if (!ME && window.BamChat && !window.claude) openAccount("create"); };
+document.getElementById("acctForm").addEventListener("submit", async e => {
+  e.preventDefault();
+  const name = document.getElementById("acctName").value.trim(), err = document.getElementById("acctErr");
+  if (BamChat.reserved(name)) { err.textContent = "That name is saved for the hosts. Pick another."; return; }
+  if (!BamChat.validName(name)) { err.textContent = "Use 3 to 20 letters, numbers, spaces, dots, dashes or underscores."; return; }
+  try { ME = await BamChat.Account.create(name); }
+  catch (_) { err.textContent = "Couldn't save your account. Make sure your browser allows site storage."; return; }
+  err.textContent = ""; closeAccount(); showName();
+  if (CHAT) CHAT.setAccount(ME);
+  chatNote("Welcome, " + ME.name + "! You can chat now.");
+});
+document.getElementById("acctLater").addEventListener("click", closeAccount);
+document.getElementById("joinBtn").addEventListener("click", () => openAccount("create"));
+document.getElementById("acctBtn").addEventListener("click", () => openAccount("panel"));
+document.getElementById("apClose").addEventListener("click", closeAccount);
+document.getElementById("apSave").addEventListener("click", () => {
+  const n = document.getElementById("apNew").value.trim(), err = document.getElementById("apErr");
+  if (BamChat.reserved(n)) { err.textContent = "That name is saved for the hosts."; return; }
+  const a = BamChat.Account.rename(n);
+  if (!a) { err.textContent = "Use 3 to 20 letters, numbers, spaces, dots, dashes or underscores."; return; }
+  ME = a; err.textContent = ""; showName(); if (CHAT) CHAT.setAccount(ME); closeAccount();
+});
 document.getElementById("chatForm").addEventListener("submit", async e => {
   e.preventDefault();
   if (!CHAT) return;
-  let n = chatName();
-  if (!n) {
-    n = document.getElementById("chatName").value.trim().slice(0, 24);
-    if (!n) { chatNote("Pick a chat name first."); document.getElementById("chatName").focus(); return; }
-    if (BamChat.reserved(n)) { chatNote("That name is saved for the hosts. Pick another."); return; }
-    try { localStorage.setItem("bambam-chat-name", n); } catch (_) {}
-    showName();
-  }
+  if (!ME) return openAccount("create");
   const t = document.getElementById("chatText");
-  const r = await CHAT.say(n, t.value);
+  const r = await CHAT.say(t.value);
+  if (r.error === "banned") return chatNote("This account is banned.");
   if (r.error === "slow") return chatNote("Whoa, slow down a sec.");
   if (r.error === "locked") return chatNote("Chat is paused by the host.");
   if (r.error === "muted") return chatNote("You've been muted by the host.");
   if (r.error === "offline") return chatNote("Not connected yet. Try again in a moment.");
   if (r.error) return;
   t.value = ""; chatNote("");
-});
-document.getElementById("changeName").addEventListener("click", () => {
-  try { localStorage.removeItem("bambam-chat-name"); } catch (_) {}
-  showName(); document.getElementById("chatName").focus();
 });
 
 // ---------- Site content (content.json, edited from admin.html) ----------
@@ -1134,6 +1200,7 @@ paintRate(); paintSpecLabels();
     if (age < MIN_AGE) { deny(); return; }
     store.set(KEY, String(Date.now()));
     gate.hidden = true; lock(false);
+    if (window.bbAfterAge) window.bbAfterAge();
   });
   document.getElementById("gateNo").addEventListener("click", deny);
 })();

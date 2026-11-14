@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Bam Bam Accounts</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bagel+Fat+One&family=Familjen+Grotesk:wght@400;500;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  /* Layout idea: a moderation ledger. Summary tiles, then one scannable row per account with status pills and actions. */
+  --paper: #e6e4d3;
+  --paper-2: #d8d6c0;
+  --ink: #1c2620;
+  --ink-soft: #4b5a50;
+  --ember: #e4572e;
+  --haze: #b7a3d8;
+  --ok: #2f7d4f;
+  --bad: #b3361a;
+  --font-display: "Bagel Fat One", "Arial Black", Impact, sans-serif;
+  --font-body: "Familjen Grotesk", "Helvetica Neue", Arial, sans-serif;
+  --font-mono: "DM Mono", ui-monospace, Menlo, monospace;
+  color-scheme: light;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--paper); color: var(--ink); font: 16px/1.5 var(--font-body); }
+:focus-visible { outline: 3px solid var(--ember); outline-offset: 2px; }
+[hidden] { display: none !important; }
+header { background: var(--ink); color: var(--paper); }
+header .wrap, main { max-width: 1100px; margin: 0 auto; padding-left: 20px; padding-right: 20px; }
+header .wrap { display: flex; align-items: center; gap: 14px; padding-top: 14px; padding-bottom: 14px; flex-wrap: wrap; }
+.logo { font-family: var(--font-display); font-size: 22px; color: inherit; text-decoration: none; }
+.logo span { color: var(--ember); }
+.tag { font: 12px var(--font-mono); color: var(--haze); letter-spacing: .06em; text-transform: uppercase; }
+.grow { flex: 1; }
+.conn { font: 12px var(--font-mono); letter-spacing: .06em; text-transform: uppercase; display: inline-flex; align-items: center; gap: 6px; }
+.conn::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: #8a948c; }
+.conn.on::before { background: #4fd18a; }
+main { padding-top: 24px; padding-bottom: 60px; display: grid; gap: 18px; }
+h1 { font-family: var(--font-display); font-weight: 400; font-size: 40px; line-height: 1; margin: 0; }
+.lede { margin: 6px 0 0; color: var(--ink-soft); max-width: 70ch; }
+.tiles { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+.tile { background: var(--paper-2); border: 2px solid var(--ink); border-radius: 14px; padding: 12px 14px; }
+.tile .n { font: 500 30px var(--font-mono); font-variant-numeric: tabular-nums; line-height: 1.1; }
+.tile .l { font: 11px var(--font-mono); text-transform: uppercase; letter-spacing: .07em; color: var(--ink-soft); }
+.tile.bad .n { color: var(--bad); }
+.tools { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+.tools input { flex: 1; min-width: 200px; font: 16px var(--font-body); padding: 10px 12px; border: 2px solid var(--ink); border-radius: 10px; background: #fff; }
+.tools input:focus { outline: none; border-color: var(--ember); }
+.chip { font: 600 14px var(--font-body); padding: 7px 13px; border-radius: 999px; border: 2px solid var(--ink); background: transparent; cursor: pointer; }
+.chip[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
+.list { display: grid; gap: 8px; }
+.row { background: var(--paper-2); border: 2px solid var(--ink); border-radius: 14px; padding: 12px 14px; display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr) auto; gap: 12px; align-items: center; }
+.row.banned { border-color: var(--bad); background: #f3e2db; }
+.who b { font-size: 17px; }
+.who .id { font: 12px var(--font-mono); color: var(--ink-soft); margin-left: 6px; }
+.meta { font: 12.5px var(--font-mono); color: var(--ink-soft); font-variant-numeric: tabular-nums; display: grid; gap: 2px; }
+.pill { display: inline-block; font: 10.5px var(--font-mono); text-transform: uppercase; letter-spacing: .06em; padding: 2px 7px; border-radius: 4px; margin-left: 8px; vertical-align: 2px; }
+.pill.active { background: #cfe9d8; color: var(--ok); }
+.pill.muted { background: var(--haze); }
+.pill.banned { background: var(--bad); color: #fff; }
+.acts { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+.btn { font: 700 13.5px var(--font-body); padding: 6px 12px; border: 2px solid var(--ink); border-radius: 999px; background: var(--paper); cursor: pointer; white-space: nowrap; }
+.btn:hover { background: var(--haze); }
+.btn.danger:hover, .btn.danger.armed { background: var(--bad); border-color: var(--bad); color: #fff; }
+.msgs { grid-column: 1 / -1; border-top: 1.5px dashed var(--ink-soft); padding-top: 8px; display: grid; gap: 4px; font-size: 14.5px; }
+.msgs .t { font: 11.5px var(--font-mono); color: var(--ink-soft); margin-right: 6px; }
+.empty { padding: 30px; text-align: center; border: 2px dashed var(--ink-soft); border-radius: 16px; color: var(--ink-soft); }
+.note { background: #fff3ee; border: 2px solid var(--ember); border-radius: 14px; padding: 12px 14px; }
+.hint { color: var(--ink-soft); font-size: 14px; margin: 0; }
+@media (max-width: 760px) {
+  .tiles { grid-template-columns: repeat(2, 1fr); }
+  .row { grid-template-columns: 1fr; }
+  .acts { justify-content: flex-start; }
+}
+</style>
+</head>
+<body>
+<header><div class="wrap">
+  <a class="logo" href="./">Bam<span>Bam</span></a>
+  <span class="tag">Account tracker · hosts only</span>
+  <span class="grow"></span>
+  <span class="conn" id="conn">Connecting…</span>
+</div></header>
+
+<main>
+  <div>
+    <h1>Accounts</h1>
+    <p class="lede">Everyone who has made a Bam Bam account. Mute hides someone's chat messages. Ban hides their messages and shows them a "banned" screen on the site. Both follow the account even if they change their name.</p>
+  </div>
+  <p class="note" id="needKey" hidden>To mute or ban, open this page from your Admin (<b>Accounts → Open account tracker</b>) or from your studio. You can still look around.</p>
+  <div class="tiles">
+    <div class="tile"><div class="n" id="nAll">0</div><div class="l">Accounts</div></div>
+    <div class="tile"><div class="n" id="nActive">0</div><div class="l">Active in 24h</div></div>
+    <div class="tile"><div class="n" id="nMuted">0</div><div class="l">Muted</div></div>
+    <div class="tile bad"><div class="n" id="nBanned">0</div><div class="l">Banned</div></div>
+  </div>
+  <div class="tools">
+    <input id="q" type="search" placeholder="Search by name or account ID" aria-label="Search accounts">
+    <div role="group" aria-label="Filter" style="display:flex;gap:6px;flex-wrap:wrap">
+      <button class="chip" aria-pressed="true" data-f="all">All</button>
+      <button class="chip" aria-pressed="false" data-f="active">Active</button>
+      <button class="chip" aria-pressed="false" data-f="muted">Muted</button>
+      <button class="chip" aria-pressed="false" data-f="banned">Banned</button>
+    </div>
+  </div>
+  <div class="list" id="list"><div class="empty">Loading accounts…</div></div>
+  <p class="hint">Accounts show up here once they've signed up or chatted. New sign-ups appear live while this page is open. Your list is also saved in this browser, so it's here next time.</p>
+</main>
+
+<script src="chat.js"></script>
+<script>
+"use strict";
+const $ = id => document.getElementById(id);
+const el = (tag, cls, text) => { const n = document.createElement(tag); if (cls) n.className = cls; if (text != null) n.textContent = text; return n; };
+const DAY = 86400000;
+const fmt = ts => ts ? new Date(ts).toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }) : "—";
+const ago = ts => { if (!ts) return "—"; const s = (Date.now() - ts) / 1000; if (s < 90) return "just now"; if (s < 3600) return Math.round(s / 60) + " min ago"; if (s < DAY / 1000) return Math.round(s / 3600) + " h ago"; return Math.round(s / 86400) + " d ago"; };
+
+// host key: from the admin link (#ck=…) or the studio on this device
+let ck = "";
+(() => {
+  const h = new URLSearchParams(location.hash.slice(1)); const k = h.get("ck");
+  if (k && /^[A-Za-z0-9_-]{40,50}$/.test(k)) { ck = k; try { const s = JSON.parse(localStorage.getItem("bb-studio") || "{}"); s.ck = k; localStorage.setItem("bb-studio", JSON.stringify(s)); } catch (_) {} }
+  if (location.hash) history.replaceState(null, "", location.pathname);
+  if (!ck) { try { ck = (JSON.parse(localStorage.getItem("bb-studio") || "{}").ck) || ""; } catch (_) {} }
+})();
+$("needKey").hidden = !!ck;
+
+const SAVE = "bb-accounts";
+function loadSaved() { try { return JSON.parse(localStorage.getItem(SAVE) || "[]"); } catch (_) { return []; } }
+let saveT = 0;
+function save(list) { clearTimeout(saveT); saveT = setTimeout(() => { try { localStorage.setItem(SAVE, JSON.stringify(list.map(a => ({ id: a.id, name: a.name, pub: a.pub, created: a.created, lastSeen: a.lastSeen })))); } catch (_) {} }, 500); }
+
+let C = null, filter = "all", open = new Set();
+function render() {
+  if (!C) return;
+  const all = C.accounts(), view = C.view();
+  save(all);
+  $("conn").textContent = view.connected ? "Live" : "Connecting…"; $("conn").classList.toggle("on", view.connected);
+  $("nAll").textContent = all.length;
+  $("nActive").textContent = all.filter(a => Date.now() - (a.lastSeen || 0) < DAY).length;
+  $("nMuted").textContent = all.filter(a => a.muted).length;
+  $("nBanned").textContent = all.filter(a => a.banned).length;
+  const q = $("q").value.trim().toLowerCase();
+  const rows = all.filter(a => {
+    if (filter === "active" && !(Date.now() - (a.lastSeen || 0) < DAY)) return false;
+    if (filter === "muted" && !a.muted) return false;
+    if (filter === "banned" && !a.banned) return false;
+    return !q || (a.name || "").toLowerCase().includes(q) || a.id.toLowerCase().includes(q);
+  });
+  const list = $("list"); list.replaceChildren();
+  if (!rows.length) { list.append(el("div", "empty", all.length ? "No accounts match." : "No accounts yet. When viewers sign up after the age check, they show up here.")); return; }
+  const msgsBy = new Map();
+  view.messages.concat([]).forEach(m => { if (m.t === "m") { if (!msgsBy.has(m.a)) msgsBy.set(m.a, []); msgsBy.get(m.a).push(m); } });
+  rows.forEach(a => {
+    const r = el("div", "row" + (a.banned ? " banned" : ""));
+    const who = el("div", "who");
+    who.append(el("b", null, a.name || "(no name)"), el("span", "id", "#" + a.id.slice(1, 5)));
+    if (a.banned) who.append(el("span", "pill banned", "Banned")); else if (a.muted) who.append(el("span", "pill muted", "Muted")); else if (Date.now() - (a.lastSeen || 0) < DAY) who.append(el("span", "pill active", "Active"));
+    const meta = el("div", "meta");
+    meta.append(el("span", null, "Joined " + fmt(a.created)), el("span", null, "Last seen " + ago(a.lastSeen)), el("span", null, "ID " + a.id));
+    const acts = el("div", "acts");
+    const mine = msgsBy.get(a.id) || [];
+    const sm = el("button", "btn", (open.has(a.id) ? "Hide" : "Show") + ` messages (${mine.length})`); sm.type = "button";
+    sm.onclick = () => { open.has(a.id) ? open.delete(a.id) : open.add(a.id); render(); };
+    acts.append(sm);
+    if (ck) {
+      const mu = el("button", "btn", a.muted ? "Unmute" : "Mute"); mu.type = "button"; mu.onclick = () => C.mod(a.muted ? "unmute" : "mute", a.id);
+      const bn = el("button", "btn danger", a.banned ? "Unban" : "Ban"); bn.type = "button";
+      bn.onclick = () => {
+        if (a.banned) return C.mod("unban", a.id);
+        if (bn.classList.contains("armed")) return C.mod("ban", a.id);
+        bn.classList.add("armed"); bn.textContent = "Tap again to ban"; setTimeout(() => { bn.classList.remove("armed"); bn.textContent = "Ban"; }, 3500);
+      };
+      acts.append(mu, bn);
+    }
+    r.append(who, meta, acts);
+    if (open.has(a.id)) {
+      const box = el("div", "msgs");
+      if (!mine.length) box.append(el("span", "hint", "No recent chat messages from this account."));
+      mine.slice(-20).forEach(m => { const line = el("div"); line.append(el("span", "t", fmt(m.ts)), document.createTextNode(m.x)); box.append(line); });
+      r.append(box);
+    }
+    list.append(r);
+  });
+}
+$("q").addEventListener("input", render);
+document.querySelectorAll(".chip").forEach(b => b.addEventListener("click", () => {
+  document.querySelectorAll(".chip").forEach(x => x.setAttribute("aria-pressed", String(x === b))); filter = b.dataset.f; render();
+}));
+setInterval(render, 30000); // keep "last seen" fresh
+
+(async () => {
+  let c = null;
+  try { c = await (await fetch("content.json?v=" + Date.now(), { cache: "no-store" })).json(); } catch (_) {}
+  const cfg = c && c.schedule && c.schedule.live && c.schedule.live.chat;
+  if (!cfg || !window.BamChat) { $("list").replaceChildren(el("div", "empty", "Chat isn't set up on the site yet.")); return; }
+  C = await BamChat.createChat({ room: cfg.room, pub: cfg.pub, privD: ck, onUpdate: render, onAccounts: render });
+  if (!C) { $("list").replaceChildren(el("div", "empty", "This browser can't run the tracker. Try Chrome, Edge or Firefox.")); return; }
+  C.seedAccounts(loadSaved());
+  render();
+})();
+</script>
+</body>
+</html>
