@@ -179,6 +179,13 @@
         "platform": "vdo",
         "id": "bambam_xp7kmvzi",
         "audience": "vuJ9bR1CZ0HgfS1E"
+      },
+      "chat": {
+        "room": "bb7nuzrigj3tdg9q",
+        "pub": {
+          "x": "Jndce8Ku3eIfy5aaN4fxVYAowlaRRX3haiCO0fE_Xas",
+          "y": "onJnVNIIM4XmezvYDThh7UZvdR2fs9J0uGMfsaKSe0A"
+        }
       }
     },
     "radio": {
@@ -235,6 +242,6 @@
       "spotify": ""
     }
   },
-  "updatedAt": "2026-11-14T11:05:00Z",
+  "updatedAt": "2026-11-14T11:30:00Z",
   "version": 1
 }

@@ -226,6 +226,34 @@ body.gated { overflow: hidden; }
 
 /* Tune in: live + radio */
 .tune { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+/* Live player + chat */
+.live-wrap { display: grid; grid-template-columns: minmax(0, 2fr) minmax(280px, 1fr); gap: 18px; margin-bottom: 18px; align-items: stretch; }
+.live-wrap .player { margin-bottom: 0; }
+.chat { min-width: 0; border: 3px solid var(--ink); border-radius: 20px; background: var(--paper); display: flex; flex-direction: column; min-height: 420px; max-height: 640px; overflow: hidden; }
+.chat-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 12px 14px; border-bottom: 2px solid var(--ink); background: var(--paper-2); }
+.chat-head h3 { font-family: var(--font-display); font-weight: 400; font-size: 22px; line-height: 1; }
+.chat-dot { font: 11px var(--font-mono); text-transform: uppercase; letter-spacing: .06em; color: var(--ink-soft); display: inline-flex; align-items: center; gap: 6px; }
+.chat-dot::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: #9aa39c; }
+.chat-dot.on::before { background: #2f9b5a; }
+.chat-list { flex: 1; overflow-y: auto; padding: 10px 12px; display: flex; flex-direction: column; gap: 6px; overscroll-behavior: contain; }
+.chat-msg { display: block; font-size: 15px; line-height: 1.35; overflow-wrap: anywhere; }
+.chat-form [hidden] { display: none !important; }
+.chat-msg b { font-weight: 700; margin-right: 6px; }
+.chat-msg.host { background: var(--ink); color: var(--paper); border-radius: 10px; padding: 8px 10px; }
+.chat-msg.host b { color: var(--ember); }
+.host-badge { display: inline-block; width: auto; font: 10px var(--font-mono); background: var(--ember); color: var(--ink); border-radius: 4px; padding: 1px 5px; margin-right: 6px; text-transform: uppercase; letter-spacing: .05em; vertical-align: 1px; }
+.chat-empty { margin: auto; text-align: center; color: var(--ink-soft); font-size: 14px; padding: 20px; }
+.chat-form { border-top: 2px solid var(--ink); padding: 10px; display: grid; gap: 8px; background: var(--paper-2); }
+.chat-form .row { display: flex; gap: 8px; }
+.chat-form input { flex: 1; min-width: 0; font: 15px var(--font-body); padding: 9px 11px; border: 2px solid var(--ink); border-radius: 10px; background: #fff; color: var(--ink); }
+.chat-form input:focus { outline: none; border-color: var(--ember); }
+.chat-form button { font: 700 14px var(--font-body); padding: 9px 14px; border-radius: 999px; border: 2px solid var(--ink); background: var(--ink); color: var(--paper); cursor: pointer; }
+.chat-form button:hover { background: var(--ember); border-color: var(--ember); color: var(--ink); }
+.chat-form .who { font-size: 13px; color: var(--ink-soft); display: flex; justify-content: space-between; gap: 8px; }
+.chat-form .who button { white-space: nowrap; background: none; border: 0; color: var(--ink); text-decoration: underline; padding: 0; font-size: 13px; font-weight: 500; }
+.chat-note { font-size: 13px; color: var(--ink-soft); min-height: 1.2em; margin: 0; }
+@media (max-width: 980px) { .live-wrap { grid-template-columns: 1fr; } .chat { min-height: 360px; max-height: 480px; } }
+
 /* Live player */
 .player { margin-bottom: 18px; border: 3px solid var(--ink); border-radius: 20px; overflow: hidden; background: var(--ink); box-shadow: 8px 8px 0 var(--ember); }
 .player-bar { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; padding: 12px 16px; color: var(--paper); }
@@ -453,6 +481,7 @@ footer p { margin: 0; max-width: 60ch; }
     </div>
     <p>Catch us live on camera three nights a week, or on the radio three more. Saturdays alternate: live one week, radio the next.</p>
   </div>
+  <div class="live-wrap">
   <div class="player" id="player">
     <div class="player-bar">
       <h3>Watch Bam Bam Live</h3>
@@ -467,6 +496,22 @@ footer p { margin: 0; max-width: 60ch; }
         <p id="idleText">When we go live, the stream plays right here. Check the schedule below for the next show.</p>
       </div>
     </div>
+  </div>
+  <aside class="chat" id="chat" aria-label="Live chat">
+    <div class="chat-head"><h3>Live chat</h3><span class="chat-dot" id="chatDot">Connecting…</span></div>
+    <div class="chat-list" id="chatList" aria-live="polite"><p class="chat-empty" id="chatEmpty">Say hi! Chat with the hosts and other viewers while the show is on.</p></div>
+    <form class="chat-form" id="chatForm" autocomplete="off">
+      <div class="row" id="nameRow">
+        <input id="chatName" maxlength="24" placeholder="Pick a chat name" aria-label="Chat name">
+      </div>
+      <div class="who" id="whoRow" hidden><span>Chatting as <b id="whoName"></b></span><button type="button" id="changeName">Change name</button></div>
+      <div class="row">
+        <input id="chatText" maxlength="200" placeholder="Say something…" aria-label="Chat message">
+        <button type="submit">Send</button>
+      </div>
+      <p class="chat-note" id="chatNote" aria-live="polite"></p>
+    </form>
+  </aside>
   </div>
 
   <div class="tune">
@@ -613,7 +658,68 @@ footer p { margin: 0; max-width: 60ch; }
   <p>© 2026 Bam Bam Reviews</p>
 </div></footer>
 
+<script src="chat.js"></script>
 <script>
+// ---------- Live chat ----------
+let CHAT = null;
+function chatNote(t) { document.getElementById("chatNote").textContent = t || ""; }
+function renderChat(v) {
+  const list = document.getElementById("chatList");
+  const atBottom = list.scrollHeight - list.scrollTop - list.clientHeight < 60;
+  list.replaceChildren();
+  if (!v.messages.length) list.append(el("p", "chat-empty", v.locked ? "Chat is paused right now." : "Say hi! Chat with the hosts and other viewers while the show is on."));
+  v.messages.forEach(m => {
+    const row = el("div", "chat-msg" + (m.t === "h" ? " host" : ""));
+    if (m.t === "h") { row.append(el("span", "host-badge", "Host"), el("b", null, "Bam Bam")); }
+    else row.append(el("b", null, m.n));
+    row.append(document.createTextNode(m.x)); list.append(row);
+  });
+  if (atBottom) list.scrollTop = list.scrollHeight;
+  const dot = document.getElementById("chatDot");
+  dot.textContent = v.connected ? (v.locked ? "Paused" : "Live") : "Connecting…"; dot.classList.toggle("on", v.connected && !v.locked);
+  document.getElementById("chatText").disabled = v.locked;
+  document.getElementById("chatText").placeholder = v.locked ? "Chat is paused by the host" : "Say something…";
+}
+function chatName() { try { return localStorage.getItem("bambam-chat-name") || ""; } catch (_) { return ""; } }
+function showName() {
+  const n = chatName();
+  document.getElementById("nameRow").hidden = !!n; document.getElementById("whoRow").hidden = !n;
+  document.getElementById("whoName").textContent = n;
+}
+async function startChat(c) {
+  const box = document.getElementById("chat");
+  const cfg = c && c.schedule && c.schedule.live && c.schedule.live.chat;
+  if (window.claude) { chatNote("Live chat works on the public website."); document.getElementById("chatDot").textContent = "Off"; return; }
+  if (!cfg || !window.BamChat) { box.hidden = true; document.querySelector(".live-wrap").style.gridTemplateColumns = "1fr"; return; }
+  CHAT = await BamChat.createChat({ room: cfg.room, pub: cfg.pub, onUpdate: renderChat });
+  if (!CHAT) { chatNote("Chat isn't available in this browser."); return; }
+  showName(); renderChat(CHAT.view());
+}
+document.getElementById("chatForm").addEventListener("submit", async e => {
+  e.preventDefault();
+  if (!CHAT) return;
+  let n = chatName();
+  if (!n) {
+    n = document.getElementById("chatName").value.trim().slice(0, 24);
+    if (!n) { chatNote("Pick a chat name first."); document.getElementById("chatName").focus(); return; }
+    if (BamChat.reserved(n)) { chatNote("That name is saved for the hosts. Pick another."); return; }
+    try { localStorage.setItem("bambam-chat-name", n); } catch (_) {}
+    showName();
+  }
+  const t = document.getElementById("chatText");
+  const r = await CHAT.say(n, t.value);
+  if (r.error === "slow") return chatNote("Whoa, slow down a sec.");
+  if (r.error === "locked") return chatNote("Chat is paused by the host.");
+  if (r.error === "muted") return chatNote("You've been muted by the host.");
+  if (r.error === "offline") return chatNote("Not connected yet. Try again in a moment.");
+  if (r.error) return;
+  t.value = ""; chatNote("");
+});
+document.getElementById("changeName").addEventListener("click", () => {
+  try { localStorage.removeItem("bambam-chat-name"); } catch (_) {}
+  showName(); document.getElementById("chatName").focus();
+});
+
 // ---------- Site content (content.json, edited from admin.html) ----------
 const PHOTO_PATH = /^(photos\/[A-Za-z0-9_.-]+\.(jpe?g|png|webp|gif)|https:\/\/lh3\.googleusercontent\.com\/d\/[A-Za-z0-9_-]{10,})$/i;
 const photoSrc = p => PHOTO_PATH.test(p) ? p : "/_blob/" + p;
@@ -637,6 +743,7 @@ const contentReady = (async () => {
     return CONTENT;
   } catch (_) { return null; }
 })();
+contentReady.then(c => startChat(c));
 function setLink(a, url) {
   const u = safeUrl(url);
   if (u) { a.href = u; a.target = "_blank"; a.removeAttribute("aria-disabled"); a.style.opacity = ""; }
