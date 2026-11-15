@@ -155,6 +155,18 @@
         "start": "19:00"
       },
       "blurb": "Live sesh on camera. Real-time reviews and your questions in chat.",
+      "chat": {
+        "pub": {
+          "x": "Jndce8Ku3eIfy5aaN4fxVYAowlaRRX3haiCO0fE_Xas",
+          "y": "onJnVNIIM4XmezvYDThh7UZvdR2fs9J0uGMfsaKSe0A"
+        },
+        "room": "bb7nuzrigj3tdg9q"
+      },
+      "embed": {
+        "audience": "vuJ9bR1CZ0HgfS1E",
+        "id": "bambam_xp7kmvzi",
+        "platform": "vdo"
+      },
       "link": "",
       "platform": "YouTube",
       "title": "Bam Bam Live",
@@ -174,19 +186,7 @@
           "mins": 60,
           "start": "20:00"
         }
-      ],
-      "embed": {
-        "platform": "vdo",
-        "id": "bambam_xp7kmvzi",
-        "audience": "vuJ9bR1CZ0HgfS1E"
-      },
-      "chat": {
-        "room": "bb7nuzrigj3tdg9q",
-        "pub": {
-          "x": "Jndce8Ku3eIfy5aaN4fxVYAowlaRRX3haiCO0fE_Xas",
-          "y": "onJnVNIIM4XmezvYDThh7UZvdR2fs9J0uGMfsaKSe0A"
-        }
-      }
+      ]
     },
     "radio": {
       "alt": {
@@ -239,7 +239,8 @@
     "links": {
       "apple": "",
       "rss": "",
-      "spotify": ""
+      "spotify": "",
+      "youtube": "https://www.youtube.com/@bambamreviews"
     }
   },
   "updatedAt": "2026-11-14T11:30:00Z",

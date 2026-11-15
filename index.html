@@ -306,6 +306,10 @@ body.gated { overflow: hidden; }
 .screen .idle { position: absolute; inset: 0; z-index: 1; overflow: hidden; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; gap: 8px; text-align: center; color: #fff; padding: 24px 20px 26px; background: #0f1512; }
 .screen .idle::before { content: ""; position: absolute; inset: 0; z-index: 1; background: linear-gradient(to top, rgba(8,12,10,.96) 0%, rgba(8,12,10,.85) 30%, rgba(8,12,10,.35) 55%, rgba(8,12,10,0) 72%); pointer-events: none; }
 .screen .idle > * { position: relative; z-index: 2; }
+.btn .yt-ico { width: 22px; height: 22px; margin-right: 8px; vertical-align: -5px; flex: none; }
+.foot-yt { display: inline-flex; align-items: center; font-weight: 700; color: inherit; }
+.foot-yt .yt-ico { width: 22px; height: 22px; margin-right: 8px; }
+.foot-yt[hidden] { display: none; }
 .screen .idle .poster-bg { position: absolute; inset: 0; z-index: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 30%; }
 .screen .idle .offair { font: 600 12px var(--font-mono, monospace); letter-spacing: .14em; text-transform: uppercase; color: #fff; background: rgba(15,21,18,.7); border: 1px solid rgba(255,255,255,.45); border-radius: 999px; padding: 4px 12px; display: inline-flex; align-items: center; gap: 7px; }
 .screen .idle .offair::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: #8a948c; }
@@ -533,7 +537,8 @@ footer p { margin: 0; max-width: 60ch; }
   <div class="hero-copy">
     <p class="lede">The podcast where we smoke it, sip it, rip it and tell you straight whether it's worth your money.</p>
     <div class="listen">
-      <a class="btn primary" href="#" id="lnk-spotify" rel="noopener">Listen on Spotify</a>
+      <a class="btn primary yt" href="https://www.youtube.com/@bambamreviews" id="lnk-youtube" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" aria-hidden="true" class="yt-ico"><path fill="#ff0033" d="M23 7.2a3 3 0 0 0-2.1-2.1C19 4.6 12 4.6 12 4.6s-7 0-8.9.5A3 3 0 0 0 1 7.2 31 31 0 0 0 .5 12 31 31 0 0 0 1 16.8a3 3 0 0 0 2.1 2.1c1.9.5 8.9.5 8.9.5s7 0 8.9-.5a3 3 0 0 0 2.1-2.1 31 31 0 0 0 .5-4.8 31 31 0 0 0-.5-4.8z"/><path fill="#fff" d="M9.8 15.1 15.6 12 9.8 8.9z"/></svg>Subscribe on YouTube</a>
+      <a class="btn" href="#" id="lnk-spotify" rel="noopener">Listen on Spotify</a>
       <a class="btn" href="#" id="lnk-apple" rel="noopener">Apple Podcasts</a>
       <a class="btn" href="#" id="lnk-rss" rel="noopener">RSS</a>
     </div>
@@ -762,6 +767,7 @@ footer p { margin: 0; max-width: 60ch; }
 </main>
 
 <footer><div class="wrap">
+  <p><a class="foot-yt" id="footYt" href="https://www.youtube.com/@bambamreviews" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" aria-hidden="true" class="yt-ico"><path fill="#ff0033" d="M23 7.2a3 3 0 0 0-2.1-2.1C19 4.6 12 4.6 12 4.6s-7 0-8.9.5A3 3 0 0 0 1 7.2 31 31 0 0 0 .5 12 31 31 0 0 0 1 16.8a3 3 0 0 0 2.1 2.1c1.9.5 8.9.5 8.9.5s7 0 8.9-.5a3 3 0 0 0 2.1-2.1 31 31 0 0 0 .5-4.8 31 31 0 0 0-.5-4.8z"/><path fill="#fff" d="M9.8 15.1 15.6 12 9.8 8.9z"/></svg>YouTube: @bambamreviews</a></p>
   <p><b>Bam Bam Reviews</b>. For adults 21+ in places where cannabis is legal. Nothing here is medical advice. Don't drive high.</p>
   <p>© 2026 Bam Bam Reviews</p>
 </div></footer>
@@ -901,10 +907,11 @@ function applyContent(c) {
   if (ep.title) document.getElementById("epTitle").textContent = ep.title;
   if (ep.script) document.getElementById("script").textContent = "“" + ep.script + "”";
   const links = site.links || {};
-  [["spotify", "lnk-spotify"], ["apple", "lnk-apple"], ["rss", "lnk-rss"]].forEach(([k, id]) => {
+  [["youtube", "lnk-youtube"], ["spotify", "lnk-spotify"], ["apple", "lnk-apple"], ["rss", "lnk-rss"]].forEach(([k, id]) => {
     const a = document.getElementById(id); setLink(a, links[k]);
     a.hidden = !safeUrl(links[k]) && Object.values(links).some(v => safeUrl(v)); // hide empty ones once any real link exists
   });
+  { const fy = document.getElementById("footYt"); const u = safeUrl(links.youtube); fy.hidden = !u; if (u) { fy.href = u; const h = u.match(/youtube\.com\/(@[A-Za-z0-9._-]+)/); fy.lastChild.textContent = "YouTube" + (h ? ": " + h[1] : ""); } }
   if (Array.isArray(site.hosts) && site.hosts.length) {
     const box = document.getElementById("hostsList"); box.replaceChildren();
     site.hosts.slice(0, 6).forEach(h => {
