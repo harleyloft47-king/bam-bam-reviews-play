@@ -1410,8 +1410,9 @@ const PC = (() => {
     if (fakeFs) { setFakeFs(false); return; }
     const req = pl.requestFullscreen || pl.webkitRequestFullscreen;
     if (req && (document.fullscreenEnabled || document.webkitFullscreenEnabled)) {
-      try { await req.call(pl); } catch (_) {}
-      await new Promise(r => setTimeout(r, 350));
+      // some browsers never answer the request, so don't wait on it
+      try { const pr = req.call(pl); if (pr && pr.catch) pr.catch(() => {}); } catch (_) {}
+      await new Promise(r => setTimeout(r, 400));
       if (document.fullscreenElement || document.webkitFullscreenElement) return;
     }
     setFakeFs(true); // phones and embedded pages that block real full screen: fill the window instead
@@ -1435,8 +1436,9 @@ const PC = (() => {
     $p("pVol").oninput = e => setVol(e.target.value / 100);
     $p("pTheater").onclick = () => { const on = !document.querySelector(".live-wrap").classList.contains("theater"); document.querySelector(".live-wrap").classList.toggle("theater", on); store.set("bb-theater", on); };
     $p("pFs").onclick = toggleFs;
-    document.addEventListener("fullscreenchange", paint);
-    document.addEventListener("webkitfullscreenchange", paint);
+    const onFs = () => { if ((document.fullscreenElement || document.webkitFullscreenElement) && fakeFs) setFakeFs(false); paint(); };
+    document.addEventListener("fullscreenchange", onFs);
+    document.addEventListener("webkitfullscreenchange", onFs);
     document.addEventListener("keydown", e => { if (e.key === "Escape" && fakeFs) setFakeFs(false); });
     $p("pPip").hidden = !window.documentPictureInPicture;
     $p("pPip").onclick = popOut;
