@@ -276,6 +276,33 @@ body.gated { overflow: hidden; }
 .player-bar a { color: var(--haze); font-size: 14px; }
 .screen { position: relative; aspect-ratio: 16 / 9; background: #0f1512; }
 .screen iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+/* YouTube-style control bar */
+.pbar { display: flex; align-items: center; gap: 4px; padding: 6px 10px; background: #0b100d; color: #f3f1e4; }
+.pbar[hidden] { display: none; }
+.pbar button { width: 40px; height: 40px; display: inline-grid; place-items: center; border: 0; background: none; color: inherit; border-radius: 8px; cursor: pointer; }
+.pbar button:hover { background: rgba(255,255,255,.12); }
+.pbar button svg { width: 22px; height: 22px; fill: currentColor; }
+.pbar button[hidden] { display: none; }
+.pbar .vol { display: inline-flex; align-items: center; }
+.pbar input[type=range] { width: 0; opacity: 0; transition: width .2s, opacity .2s; accent-color: var(--ember); cursor: pointer; }
+.pbar .vol:hover input[type=range], .pbar .vol:focus-within input[type=range], .pbar input[type=range].show { width: 86px; opacity: 1; margin: 0 6px; }
+.pbar .golive { width: auto; padding: 0 10px; font: 600 13px var(--font-body); display: inline-flex; gap: 7px; align-items: center; letter-spacing: .04em; text-transform: uppercase; }
+.pbar .golive::before { content: ""; width: 9px; height: 9px; border-radius: 50%; background: #8a948c; }
+.pbar .golive.at-live::before { background: #ff3b30; }
+.pbar .spacer { flex: 1; }
+.pbar .hint { font-size: 12.5px; color: #a9b3ab; padding: 0 6px; }
+.unmute { position: absolute; left: 12px; top: 12px; z-index: 2; display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px 8px 10px; border-radius: 999px; border: 0; background: rgba(15,21,18,.82); color: #fff; font: 600 14px var(--font-body); cursor: pointer; }
+.unmute svg { width: 20px; height: 20px; fill: currentColor; }
+.unmute:hover { background: var(--ember); color: var(--ink); }
+.paused { position: absolute; inset: 0; z-index: 1; display: grid; place-content: center; justify-items: center; gap: 12px; color: #fff; background: #0f1512; text-align: center; padding: 20px; }
+.paused button { width: 74px; height: 74px; border-radius: 50%; border: 0; background: var(--ember); color: var(--ink); cursor: pointer; display: grid; place-items: center; }
+.paused button svg { width: 34px; height: 34px; fill: currentColor; }
+.unmute[hidden], .paused[hidden], .screen .idle[hidden] { display: none; }
+.player:fullscreen { display: flex; flex-direction: column; border: 0; border-radius: 0; box-shadow: none; }
+.player:fullscreen .screen { flex: 1; aspect-ratio: auto; }
+.live-wrap.theater { grid-template-columns: 1fr; }
+@media (max-width: 980px) { #pTheater { display: none; } }
+.live-wrap.theater .chat { min-height: 320px; max-height: 420px; }
 .screen .idle { position: absolute; inset: 0; display: grid; place-content: center; justify-items: center; gap: 12px; text-align: center; color: var(--paper); padding: 20px; }
 .screen .idle .big { font-family: var(--font-display); font-size: clamp(30px, 6vw, 56px); line-height: 1; color: var(--ember); }
 .screen .idle p { margin: 0; color: #c3cbc4; max-width: 44ch; }
@@ -544,6 +571,21 @@ footer p { margin: 0; max-width: 60ch; }
         <span class="big">Stream coming soon</span>
         <p id="idleText">When we go live, the stream plays right here. Check the schedule below for the next show.</p>
       </div>
+      <button class="unmute" id="unmuteBtn" type="button" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16 9l5 6M21 9l-5 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>Tap to unmute</button>
+      <div class="paused" id="pausedCover" hidden><button type="button" id="resumeBtn" aria-label="Play"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg></button><span>Paused. Press play to jump back to live.</span></div>
+    </div>
+    <div class="pbar" id="pbar" role="toolbar" aria-label="Player controls" hidden>
+      <button type="button" id="pPlay" aria-label="Pause (k)" title="Pause (k)"><svg viewBox="0 0 24 24" aria-hidden="true" id="pPlayIco"><path d="M6 5h4v14H6zM14 5h4v14h-4z"/></svg></button>
+      <span class="vol" id="pVolWrap">
+        <button type="button" id="pMute" aria-label="Unmute (m)" title="Unmute (m)"><svg viewBox="0 0 24 24" aria-hidden="true" id="pMuteIco"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16 9l5 6M21 9l-5 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
+        <input type="range" id="pVol" min="0" max="100" step="1" value="80" aria-label="Volume">
+      </span>
+      <button type="button" class="golive at-live" id="pLive" title="Jump to live">Live</button>
+      <span class="hint" id="pHint" hidden>Use the player's own buttons for sound</span>
+      <span class="spacer"></span>
+      <button type="button" id="pTheater" aria-label="Theater mode (t)" title="Theater mode (t)"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="6" width="19" height="12" rx="1.5" fill="none" stroke="currentColor" stroke-width="2"/></svg></button>
+      <button type="button" id="pPip" aria-label="Pop out player" title="Pop out player" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="4.5" width="19" height="15" rx="1.5" fill="none" stroke="currentColor" stroke-width="2"/><rect x="12" y="11" width="7" height="6" rx="1"/></svg></button>
+      <button type="button" id="pFs" aria-label="Full screen (f)" title="Full screen (f)"><svg viewBox="0 0 24 24" aria-hidden="true" id="pFsIco"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg></button>
     </div>
   </div>
   <aside class="chat" id="chat" aria-label="Live chat">
@@ -1272,13 +1314,113 @@ function setupPlayer(embed, chan) {
     const a = el("a", "btn", "Open the stream ↗"); a.href = PLAYER.out; a.target = "_blank"; a.rel = "noopener"; idle.append(a);
     return;
   }
-  const f = document.createElement("iframe");
-  f.src = PLAYER.src; f.title = "Bam Bam live stream"; f.loading = "lazy";
-  f.allow = "autoplay; fullscreen; picture-in-picture; encrypted-media";
-  f.allowFullscreen = true; f.referrerPolicy = "strict-origin-when-cross-origin";
   idle.hidden = true;
-  document.getElementById("screen").append(f);
+  PC.start(PLAYER);
 }
+
+// ----- player controls (play/pause, mute, volume, live, theater, pop-out, fullscreen) -----
+const PC = (() => {
+  const $p = id => document.getElementById(id);
+  const ICONS = { play: '<path d="M8 5v14l11-7z"/>', pause: '<path d="M6 5h4v14H6zM14 5h4v14h-4z"/>', vol: '<path d="M4 9v6h4l5 4V5L8 9zM16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M4 9v6h4l5 4V5L8 9z"/>', mute: '<path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16 9l5 6M21 9l-5 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>', fs: '<path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>', fsx: '<path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>' };
+  const store = { get(k, d) { try { const v = localStorage.getItem(k); return v === null ? d : JSON.parse(v); } catch (_) { return d; } }, set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (_) {} } };
+  let P = null, frame = null, kind = "native", muted = true, vol = store.get("bb-vol", 0.8), paused = false;
+  const screen = () => $p("screen"), player = () => $p("player");
+  function send(msg) {
+    if (!frame || !frame.contentWindow) return;
+    if (kind === "vdo") frame.contentWindow.postMessage(msg, "https://vdo.ninja");
+    else if (kind === "yt") frame.contentWindow.postMessage(JSON.stringify({ event: "command", func: msg.func, args: msg.args || [] }), "*");
+  }
+  function applyAudio() {
+    if (kind === "vdo") { send({ volume: vol }); send({ mute: muted }); }
+    else if (kind === "yt") { send({ func: "setVolume", args: [Math.round(vol * 100)] }); send({ func: muted ? "mute" : "unMute" }); }
+    paint();
+  }
+  function srcFor() {
+    if (kind === "yt") return P.src + "&enablejsapi=1&playsinline=1&origin=" + encodeURIComponent(location.origin);
+    return P.src;
+  }
+  function mount() {
+    if (frame) frame.remove();
+    frame = document.createElement("iframe");
+    frame.src = srcFor(); frame.title = "Bam Bam live stream";
+    frame.allow = "autoplay; fullscreen; picture-in-picture; encrypted-media";
+    frame.allowFullscreen = true; frame.referrerPolicy = "strict-origin-when-cross-origin";
+    frame.addEventListener("load", () => { setTimeout(applyAudio, 600); setTimeout(applyAudio, 2500); });
+    screen().prepend(frame);
+  }
+  function paint() {
+    const audio = kind !== "native";
+    $p("pVolWrap").hidden = !audio; $p("pHint").hidden = audio;
+    $p("pMuteIco").innerHTML = muted || vol === 0 ? ICONS.mute : ICONS.vol;
+    $p("pMute").setAttribute("aria-label", muted ? "Unmute (m)" : "Mute (m)"); $p("pMute").title = muted ? "Unmute (m)" : "Mute (m)";
+    $p("pVol").value = Math.round((muted ? 0 : vol) * 100);
+    $p("pPlayIco").innerHTML = paused ? ICONS.play : ICONS.pause;
+    $p("pPlay").setAttribute("aria-label", paused ? "Play (k)" : "Pause (k)"); $p("pPlay").title = paused ? "Play (k)" : "Pause (k)";
+    $p("pLive").classList.toggle("at-live", !paused);
+    $p("unmuteBtn").hidden = !(audio && muted && !paused);
+    $p("pausedCover").hidden = !paused;
+    const fs = document.fullscreenElement === player();
+    $p("pFsIco").innerHTML = fs ? ICONS.fsx : ICONS.fs; $p("pFs").title = fs ? "Exit full screen (f)" : "Full screen (f)";
+  }
+  function setMuted(m) { muted = m; if (!m && vol === 0) vol = 0.5; applyAudio(); }
+  function setVol(v) { vol = Math.max(0, Math.min(1, v)); store.set("bb-vol", vol); muted = vol === 0; applyAudio(); }
+  function pause() {
+    paused = true;
+    if (kind === "yt") send({ func: "pauseVideo" });
+    else if (frame) { frame.remove(); frame = null; } // live streams: stop the video so it doesn't use data
+    paint();
+  }
+  function play(jumpLive) {
+    paused = false;
+    if (kind === "yt" && frame && !jumpLive) send({ func: "playVideo" }); else mount();
+    paint();
+  }
+  async function popOut() {
+    if (!window.documentPictureInPicture || !frame) return;
+    const win = await documentPictureInPicture.requestWindow({ width: 480, height: 270 });
+    win.document.body.style.cssText = "margin:0;background:#000";
+    const scr = screen(); const holder = document.createElement("div");
+    holder.style.cssText = "position:relative;width:100vw;height:100vh"; win.document.body.append(holder);
+    frame.style.cssText = "position:absolute;inset:0;width:100%;height:100%;border:0";
+    holder.append(frame); // the stream reloads at the live point in the pop-out
+    win.addEventListener("pagehide", () => { if (frame) { frame.style.cssText = ""; scr.prepend(frame); } });
+  }
+  function bind() {
+    $p("pPlay").onclick = () => paused ? play() : pause();
+    $p("resumeBtn").onclick = () => play(true);
+    $p("pLive").onclick = () => play(true);
+    $p("pMute").onclick = () => setMuted(!muted);
+    $p("unmuteBtn").onclick = () => setMuted(false);
+    $p("pVol").oninput = e => setVol(e.target.value / 100);
+    $p("pTheater").onclick = () => { const on = !document.querySelector(".live-wrap").classList.contains("theater"); document.querySelector(".live-wrap").classList.toggle("theater", on); store.set("bb-theater", on); };
+    $p("pFs").onclick = () => document.fullscreenElement ? document.exitFullscreen() : (player().requestFullscreen ? player().requestFullscreen() : player().webkitRequestFullscreen && player().webkitRequestFullscreen());
+    document.addEventListener("fullscreenchange", paint);
+    $p("pPip").hidden = !window.documentPictureInPicture;
+    $p("pPip").onclick = popOut;
+    // YouTube-style keys when you're not typing
+    document.addEventListener("keydown", e => {
+      if (!P || e.ctrlKey || e.metaKey || e.altKey || /^(INPUT|TEXTAREA|SELECT)$/.test((e.target.tagName || "")) || e.target.isContentEditable) return;
+      const r = player().getBoundingClientRect(); if (r.bottom < 0 || r.top > innerHeight) return; // only when the player is on screen
+      const k = e.key.toLowerCase();
+      if (k === "k" || k === " ") { e.preventDefault(); paused ? play() : pause(); }
+      else if (k === "m") setMuted(!muted);
+      else if (k === "f") $p("pFs").click();
+      else if (k === "t") $p("pTheater").click();
+      else if (e.key === "ArrowUp") { e.preventDefault(); setVol(vol + 0.05); $p("pVol").classList.add("show"); }
+      else if (e.key === "ArrowDown") { e.preventDefault(); setVol(vol - 0.05); $p("pVol").classList.add("show"); }
+    });
+  }
+  return {
+    start(p) {
+      P = p;
+      kind = /vdo\.ninja/.test(p.src) ? "vdo" : /youtube\.com\/embed/.test(p.src) ? "yt" : "native";
+      muted = true; paused = false;
+      if (store.get("bb-theater", false)) document.querySelector(".live-wrap").classList.add("theater");
+      bind(); mount();
+      $p("pbar").hidden = false; paint();
+    },
+  };
+})();
 function applySchedule(sc) {
   const toSlot = s => { const [h, m] = String(s.start || "0:0").split(":").map(Number); return { dow: +s.dow, h: h || 0, m: m || 0, mins: Math.max(5, +s.mins || 60) }; };
   if (typeof sc.utcOffset === "number" && sc.utcOffset >= -12 && sc.utcOffset <= 14) SHOW_OFFSET_H = sc.utcOffset;
