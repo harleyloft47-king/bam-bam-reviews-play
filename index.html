@@ -303,15 +303,24 @@ body.gated { overflow: hidden; }
 .live-wrap.theater { grid-template-columns: 1fr; }
 @media (max-width: 980px) { #pTheater { display: none; } }
 .live-wrap.theater .chat { min-height: 320px; max-height: 420px; }
-.screen .idle { position: absolute; inset: 0; z-index: 1; display: grid; place-content: center; justify-items: center; gap: 10px; text-align: center; color: var(--paper); padding: 20px; background: radial-gradient(circle at 50% 38%, #24302a 0%, #0f1512 70%); }
-.screen .idle .poster-logo { width: clamp(84px, 26%, 220px); height: auto; aspect-ratio: 1; object-fit: cover; border-radius: 18px; box-shadow: 5px 5px 0 var(--ember); }
-.screen .idle .offair { font: 600 12px var(--font-mono, monospace); letter-spacing: .14em; text-transform: uppercase; color: #c3cbc4; border: 1px solid #56625a; border-radius: 999px; padding: 4px 12px; }
-@media (max-width: 560px) { .screen .idle { gap: 6px; padding: 12px; } .screen .idle p { font-size: 13px; } .screen .idle .big { font-size: 26px; } }
+.screen .idle { position: absolute; inset: 0; z-index: 1; overflow: hidden; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; gap: 8px; text-align: center; color: #fff; padding: 24px 20px 26px; background: #0f1512; }
+.screen .idle::before { content: ""; position: absolute; inset: 0; z-index: 1; background: linear-gradient(to top, rgba(8,12,10,.96) 0%, rgba(8,12,10,.85) 30%, rgba(8,12,10,.35) 55%, rgba(8,12,10,0) 72%); pointer-events: none; }
+.screen .idle > * { position: relative; z-index: 2; }
+.screen .idle .poster-bg { position: absolute; inset: 0; z-index: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 30%; }
+.screen .idle .offair { font: 600 12px var(--font-mono, monospace); letter-spacing: .14em; text-transform: uppercase; color: #fff; background: rgba(15,21,18,.7); border: 1px solid rgba(255,255,255,.45); border-radius: 999px; padding: 4px 12px; display: inline-flex; align-items: center; gap: 7px; }
+.screen .idle .offair::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: #8a948c; }
+.screen .idle .offair.on { background: var(--ember); border-color: var(--ember); color: var(--ink); }
+.screen .idle .offair.on::before { background: #ff3b30; }
+.screen .idle .big { text-shadow: 0 2px 0 #0b100d, 0 3px 16px rgba(0,0,0,.85); }
+.screen .idle p { text-shadow: 0 1px 8px rgba(0,0,0,.8); }
+.screen .idle p.next { color: #fff; font-weight: 600; }
+.player:fullscreen .screen .idle .poster-bg, .player.fake-fs .screen .idle .poster-bg { object-fit: contain; background: #0f1512; }
+@media (max-width: 560px) { .screen .idle { gap: 5px; padding: 12px 12px 14px; } .screen .idle p { font-size: 12.5px; } .screen .idle .big { font-size: 26px; } }
 .player.fake-fs { position: fixed; inset: 0; z-index: 2147483000; margin: 0; display: flex; flex-direction: column; border: 0; border-radius: 0; box-shadow: none; }
 .player.fake-fs .screen { flex: 1; aspect-ratio: auto; }
 html.no-scroll, html.no-scroll body { overflow: hidden; }
 .screen .idle .big { font-family: var(--font-display); font-size: clamp(30px, 6vw, 56px); line-height: 1; color: var(--ember); }
-.screen .idle p { margin: 0; color: #c3cbc4; max-width: 44ch; }
+.screen .idle p { margin: 0; color: #e4e8e4; max-width: 46ch; }
 .screen .idle .btn { background: var(--ember); border-color: var(--ember); color: var(--ink); }
 .chan { border: 2px solid var(--ink); border-radius: 18px; padding: 22px; display: grid; gap: 16px; align-content: start; background: var(--paper-2); }
 .chan.radio { background: var(--paper); }
@@ -574,10 +583,11 @@ footer p { margin: 0; max-width: 60ch; }
     </div>
     <div class="screen" id="screen">
       <div class="idle" id="screenIdle">
-        <img class="poster-logo" src="mascot.webp" width="900" height="900" alt="">
-        <span class="big">Bam Bam Reviews</span>
-        <span class="offair">Off air</span>
-        <p id="idleText">When we go live, the stream plays right here. Check the schedule below for the next show.</p>
+        <img class="poster-bg" src="mascot.webp" width="900" height="900" alt="">
+        <span class="big" id="idleTitle">Bam Bam Reviews</span>
+        <span class="offair" id="idlePill">Off air</span>
+        <p id="idleText">We're off air right now.</p>
+        <p class="next" id="idleNext" hidden></p>
       </div>
       <button class="unmute" id="unmuteBtn" type="button" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16 9l5 6M21 9l-5 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>Tap to unmute</button>
       <div class="paused" id="pausedCover" hidden><button type="button" id="resumeBtn" aria-label="Play"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg></button><span>Paused. Press play to jump back to live.</span></div>
@@ -1293,6 +1303,7 @@ let SHOWS = {
 const DAY = 86400000;
 // ----- live player: embeds the stream from YouTube, Twitch or Kick -----
 let PLAYER = null; // {src, platform, out}
+let CLAUDE_LINK = false;
 function embedFor(e) {
   if (!e || !e.id) return null;
   const id = String(e.id).trim();
@@ -1318,6 +1329,7 @@ function setupPlayer(embed, chan) {
   if (!PLAYER) return;
   const idle = document.getElementById("screenIdle");
   if (window.claude) { // inside claude.ai, outside players can't load: offer the link instead
+    CLAUDE_LINK = true;
     idle.querySelector("p").textContent = "Watch the stream on " + PLAYER.platform + ".";
     const a = el("a", "btn", "Open the stream ↗"); a.href = PLAYER.out; a.target = "_blank"; a.rel = "noopener"; idle.append(a);
     return;
@@ -1381,12 +1393,7 @@ const PC = (() => {
     $p("pausedCover").hidden = !paused;
     const idle = $p("screenIdle"); idle.hidden = !(offAir && !paused);
     $p("pLive").classList.toggle("at-live", !paused && !offAir);
-    if (offAir) {
-      const n = NEXT_LIVE || {};
-      $p("idleText").textContent = n.current ? "The show's about to start. Hang tight, the stream pops up right here."
-        : n.next ? "We're off air right now. Next live show: " + fmtWhen.format(n.next.start) + "."
-        : "We're off air right now. When we go live, the stream plays right here.";
-    }
+    if (offAir) paintIdle();
     const fs = document.fullscreenElement === player() || document.webkitFullscreenElement === player() || fakeFs;
     $p("pFsIco").innerHTML = fs ? ICONS.fsx : ICONS.fs; $p("pFs").title = fs ? "Exit full screen (f)" : "Full screen (f)";
   }
@@ -1456,7 +1463,7 @@ const PC = (() => {
     });
   }
   return {
-    isLive: () => live, kind: () => kind, refresh: () => { if (P) paint(); },
+    isLive: () => live, kind: () => kind, started: () => !!P, refresh: () => { if (P) paint(); },
     start(p) {
       P = p;
       kind = /vdo\.ninja/.test(p.src) ? "vdo" : /youtube\.com\/embed/.test(p.src) ? "yt" : "native";
@@ -1481,7 +1488,7 @@ function applySchedule(sc) {
       biweekly: alt.enabled === false ? null : { ...toSlot(alt), anchor: [ay, (am || 1) - 1, ad || 1], label: "Saturday special" },
     };
     CHAN[k] = { platform: c.platform || CHAN[k].platform, link: safeUrl(c.link) };
-    if (k === "live") setupPlayer(c.embed, CHAN.live);
+    if (k === "live") { OFFAIR = c.offair && typeof c.offair === "object" ? c.offair : {}; setupPlayer(c.embed, CHAN.live); }
     const root = document.getElementById("ch-" + k);
     if (c.title) root.querySelector("[data-title]").textContent = c.title;
     if (c.blurb) root.querySelector("[data-blurb]").textContent = c.blurb;
@@ -1520,7 +1527,29 @@ function countdown(ms) {
   return (d ? d + "d " : "") + `${pad(h)}:${pad(m)}:${pad(sec)}`;
 }
 
-let NEXT_LIVE = null;
+let NEXT_LIVE = null, OFFAIR = {};
+// The off-air screen. Title and message come from the admin (Live & Radio → Off-air screen).
+const fmtNextDay = new Intl.DateTimeFormat(undefined, { weekday: "long", month: "long", day: "numeric" });
+const fmtNextTime = new Intl.DateTimeFormat(undefined, { hour: "numeric", minute: "2-digit" });
+function ordinal(n) { const v = n % 100; return n + (["th", "st", "nd", "rd"][(v - 20) % 10] || ["th", "st", "nd", "rd"][v] || "th"); }
+function nextShowText(d) {
+  const day = fmtNextDay.formatToParts(d).map(p => p.type === "day" ? ordinal(+p.value) : p.value).join("");
+  return day + ", " + fmtNextTime.format(d).replace(":00", "");
+}
+function paintIdle() {
+  if (CLAUDE_LINK) return; // claude.ai copy shows a link to the stream instead
+  const o = OFFAIR || {}, n = NEXT_LIVE || {};
+  document.getElementById("idleTitle").textContent = (o.title || "").trim() || "Bam Bam Reviews";
+  const pill = document.getElementById("idlePill");
+  pill.textContent = n.current ? "On air soon" : "Off air"; pill.classList.toggle("on", !!n.current);
+  const custom = (o.message || "").trim();
+  document.getElementById("idleText").textContent = n.current
+    ? (custom && o.messageWhenStarting ? custom : "The show's about to start. Hang tight, the stream pops up right here.")
+    : (custom || "We're off air right now.");
+  const nx = document.getElementById("idleNext");
+  const showNext = o.showNext !== false && !n.current && n.next;
+  nx.hidden = !showNext; if (showNext) nx.textContent = "Next live show: " + nextShowText(n.next.start);
+}
 function paintSchedules() {
   const now = Date.now();
   Object.entries(SHOWS).forEach(([key, show]) => {
@@ -1563,7 +1592,7 @@ function paintSchedules() {
     }
   });
   const liveOn = PC.isLive() || (PC.kind() !== "vdo" && document.querySelector("#ch-live [data-badge]").classList.contains("on"));
-  PC.refresh();
+  PC.refresh(); if (!PC.started()) paintIdle();
   const pb = document.getElementById("playerBadge"); pb.textContent = liveOn ? "Live now" : "Off air"; pb.classList.toggle("on", liveOn);
   const anyLive = document.querySelector(".tune .badge.on");
   document.getElementById("navLive").classList.toggle("on", !!anyLive);
