@@ -294,7 +294,7 @@ body.gated { overflow: hidden; }
 .unmute { position: absolute; left: 12px; top: 12px; z-index: 2; display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px 8px 10px; border-radius: 999px; border: 0; background: rgba(15,21,18,.82); color: #fff; font: 600 14px var(--font-body); cursor: pointer; }
 .unmute svg { width: 20px; height: 20px; fill: currentColor; }
 .unmute:hover { background: var(--ember); color: var(--ink); }
-.paused { position: absolute; inset: 0; z-index: 1; display: grid; place-content: center; justify-items: center; gap: 12px; color: #fff; background: #0f1512; text-align: center; padding: 20px; }
+.paused { position: absolute; inset: 0; z-index: 3; display: grid; place-content: center; justify-items: center; gap: 12px; color: #fff; background: #0f1512; text-align: center; padding: 20px; }
 .paused button { width: 74px; height: 74px; border-radius: 50%; border: 0; background: var(--ember); color: var(--ink); cursor: pointer; display: grid; place-items: center; }
 .paused button svg { width: 34px; height: 34px; fill: currentColor; }
 .unmute[hidden], .paused[hidden], .screen .idle[hidden] { display: none; }
@@ -303,7 +303,13 @@ body.gated { overflow: hidden; }
 .live-wrap.theater { grid-template-columns: 1fr; }
 @media (max-width: 980px) { #pTheater { display: none; } }
 .live-wrap.theater .chat { min-height: 320px; max-height: 420px; }
-.screen .idle { position: absolute; inset: 0; display: grid; place-content: center; justify-items: center; gap: 12px; text-align: center; color: var(--paper); padding: 20px; }
+.screen .idle { position: absolute; inset: 0; z-index: 1; display: grid; place-content: center; justify-items: center; gap: 10px; text-align: center; color: var(--paper); padding: 20px; background: radial-gradient(circle at 50% 38%, #24302a 0%, #0f1512 70%); }
+.screen .idle .poster-logo { width: clamp(84px, 26%, 220px); height: auto; aspect-ratio: 1; object-fit: cover; border-radius: 18px; box-shadow: 5px 5px 0 var(--ember); }
+.screen .idle .offair { font: 600 12px var(--font-mono, monospace); letter-spacing: .14em; text-transform: uppercase; color: #c3cbc4; border: 1px solid #56625a; border-radius: 999px; padding: 4px 12px; }
+@media (max-width: 560px) { .screen .idle { gap: 6px; padding: 12px; } .screen .idle p { font-size: 13px; } .screen .idle .big { font-size: 26px; } }
+.player.fake-fs { position: fixed; inset: 0; z-index: 2147483000; margin: 0; display: flex; flex-direction: column; border: 0; border-radius: 0; box-shadow: none; }
+.player.fake-fs .screen { flex: 1; aspect-ratio: auto; }
+html.no-scroll, html.no-scroll body { overflow: hidden; }
 .screen .idle .big { font-family: var(--font-display); font-size: clamp(30px, 6vw, 56px); line-height: 1; color: var(--ember); }
 .screen .idle p { margin: 0; color: #c3cbc4; max-width: 44ch; }
 .screen .idle .btn { background: var(--ember); border-color: var(--ember); color: var(--ink); }
@@ -568,7 +574,9 @@ footer p { margin: 0; max-width: 60ch; }
     </div>
     <div class="screen" id="screen">
       <div class="idle" id="screenIdle">
-        <span class="big">Stream coming soon</span>
+        <img class="poster-logo" src="mascot.webp" width="900" height="900" alt="">
+        <span class="big">Bam Bam Reviews</span>
+        <span class="offair">Off air</span>
         <p id="idleText">When we go live, the stream plays right here. Check the schedule below for the next show.</p>
       </div>
       <button class="unmute" id="unmuteBtn" type="button" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16 9l5 6M21 9l-5 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>Tap to unmute</button>
@@ -1314,7 +1322,6 @@ function setupPlayer(embed, chan) {
     const a = el("a", "btn", "Open the stream ↗"); a.href = PLAYER.out; a.target = "_blank"; a.rel = "noopener"; idle.append(a);
     return;
   }
-  idle.hidden = true;
   PC.start(PLAYER);
 }
 
@@ -1323,7 +1330,7 @@ const PC = (() => {
   const $p = id => document.getElementById(id);
   const ICONS = { play: '<path d="M8 5v14l11-7z"/>', pause: '<path d="M6 5h4v14H6zM14 5h4v14h-4z"/>', vol: '<path d="M4 9v6h4l5 4V5L8 9zM16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M4 9v6h4l5 4V5L8 9z"/>', mute: '<path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16 9l5 6M21 9l-5 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>', fs: '<path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>', fsx: '<path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>' };
   const store = { get(k, d) { try { const v = localStorage.getItem(k); return v === null ? d : JSON.parse(v); } catch (_) { return d; } }, set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (_) {} } };
-  let P = null, frame = null, kind = "native", muted = true, vol = store.get("bb-vol", 0.8), paused = false;
+  let P = null, frame = null, kind = "native", muted = true, vol = store.get("bb-vol", 0.8), paused = false, live = false, statTimer = 0, fakeFs = false;
   const screen = () => $p("screen"), player = () => $p("player");
   function send(msg) {
     if (!frame || !frame.contentWindow) return;
@@ -1345,9 +1352,21 @@ const PC = (() => {
     frame.src = srcFor(); frame.title = "Bam Bam live stream";
     frame.allow = "autoplay; fullscreen; picture-in-picture; encrypted-media";
     frame.allowFullscreen = true; frame.referrerPolicy = "strict-origin-when-cross-origin";
-    frame.addEventListener("load", () => { setTimeout(applyAudio, 600); setTimeout(applyAudio, 2500); });
+    frame.addEventListener("load", () => { setTimeout(applyAudio, 600); setTimeout(applyAudio, 2500); askStats(); });
     screen().prepend(frame);
   }
+  // our own stream: ask the player every few seconds whether video is coming in
+  function askStats() { if (kind === "vdo" && frame && frame.contentWindow) frame.contentWindow.postMessage({ getStats: true }, "https://vdo.ninja"); }
+  function setLive(on) {
+    if (on === live) return;
+    live = on; if (on) applyAudio();
+    if (typeof paintSchedules === "function") paintSchedules(); else paint();
+  }
+  addEventListener("message", e => {
+    if (kind !== "vdo" || e.origin !== "https://vdo.ninja" || !e.data || typeof e.data !== "object") return;
+    const st = e.data.stats;
+    if (st && typeof st === "object") setLive(Object.keys(st.inbound || {}).length > 0 || +st.total_inbound_connections > 0);
+  });
   function paint() {
     const audio = kind !== "native";
     $p("pVolWrap").hidden = !audio; $p("pHint").hidden = audio;
@@ -1356,10 +1375,19 @@ const PC = (() => {
     $p("pVol").value = Math.round((muted ? 0 : vol) * 100);
     $p("pPlayIco").innerHTML = paused ? ICONS.play : ICONS.pause;
     $p("pPlay").setAttribute("aria-label", paused ? "Play (k)" : "Pause (k)"); $p("pPlay").title = paused ? "Play (k)" : "Pause (k)";
-    $p("pLive").classList.toggle("at-live", !paused);
-    $p("unmuteBtn").hidden = !(audio && muted && !paused);
+
+    const offAir = kind === "vdo" && !live;
+    $p("unmuteBtn").hidden = !(audio && muted && !paused && !offAir);
     $p("pausedCover").hidden = !paused;
-    const fs = document.fullscreenElement === player();
+    const idle = $p("screenIdle"); idle.hidden = !(offAir && !paused);
+    $p("pLive").classList.toggle("at-live", !paused && !offAir);
+    if (offAir) {
+      const n = NEXT_LIVE || {};
+      $p("idleText").textContent = n.current ? "The show's about to start. Hang tight, the stream pops up right here."
+        : n.next ? "We're off air right now. Next live show: " + fmtWhen.format(n.next.start) + "."
+        : "We're off air right now. When we go live, the stream plays right here.";
+    }
+    const fs = document.fullscreenElement === player() || document.webkitFullscreenElement === player() || fakeFs;
     $p("pFsIco").innerHTML = fs ? ICONS.fsx : ICONS.fs; $p("pFs").title = fs ? "Exit full screen (f)" : "Full screen (f)";
   }
   function setMuted(m) { muted = m; if (!m && vol === 0) vol = 0.5; applyAudio(); }
@@ -1374,6 +1402,19 @@ const PC = (() => {
     paused = false;
     if (kind === "yt" && frame && !jumpLive) send({ func: "playVideo" }); else mount();
     paint();
+  }
+  function setFakeFs(on) { fakeFs = on; player().classList.toggle("fake-fs", on); document.documentElement.classList.toggle("no-scroll", on); paint(); }
+  async function toggleFs() {
+    const pl = player();
+    if (document.fullscreenElement || document.webkitFullscreenElement) { (document.exitFullscreen || document.webkitExitFullscreen).call(document); return; }
+    if (fakeFs) { setFakeFs(false); return; }
+    const req = pl.requestFullscreen || pl.webkitRequestFullscreen;
+    if (req && (document.fullscreenEnabled || document.webkitFullscreenEnabled)) {
+      try { await req.call(pl); } catch (_) {}
+      await new Promise(r => setTimeout(r, 350));
+      if (document.fullscreenElement || document.webkitFullscreenElement) return;
+    }
+    setFakeFs(true); // phones and embedded pages that block real full screen: fill the window instead
   }
   async function popOut() {
     if (!window.documentPictureInPicture || !frame) return;
@@ -1393,8 +1434,10 @@ const PC = (() => {
     $p("unmuteBtn").onclick = () => setMuted(false);
     $p("pVol").oninput = e => setVol(e.target.value / 100);
     $p("pTheater").onclick = () => { const on = !document.querySelector(".live-wrap").classList.contains("theater"); document.querySelector(".live-wrap").classList.toggle("theater", on); store.set("bb-theater", on); };
-    $p("pFs").onclick = () => document.fullscreenElement ? document.exitFullscreen() : (player().requestFullscreen ? player().requestFullscreen() : player().webkitRequestFullscreen && player().webkitRequestFullscreen());
+    $p("pFs").onclick = toggleFs;
     document.addEventListener("fullscreenchange", paint);
+    document.addEventListener("webkitfullscreenchange", paint);
+    document.addEventListener("keydown", e => { if (e.key === "Escape" && fakeFs) setFakeFs(false); });
     $p("pPip").hidden = !window.documentPictureInPicture;
     $p("pPip").onclick = popOut;
     // YouTube-style keys when you're not typing
@@ -1411,12 +1454,14 @@ const PC = (() => {
     });
   }
   return {
+    isLive: () => live, kind: () => kind, refresh: () => { if (P) paint(); },
     start(p) {
       P = p;
       kind = /vdo\.ninja/.test(p.src) ? "vdo" : /youtube\.com\/embed/.test(p.src) ? "yt" : "native";
       muted = true; paused = false;
       if (store.get("bb-theater", false)) document.querySelector(".live-wrap").classList.add("theater");
       bind(); mount();
+      clearInterval(statTimer); if (kind === "vdo") statTimer = setInterval(askStats, 4000);
       $p("pbar").hidden = false; paint();
     },
   };
@@ -1473,6 +1518,7 @@ function countdown(ms) {
   return (d ? d + "d " : "") + `${pad(h)}:${pad(m)}:${pad(sec)}`;
 }
 
+let NEXT_LIVE = null;
 function paintSchedules() {
   const now = Date.now();
   Object.entries(SHOWS).forEach(([key, show]) => {
@@ -1480,6 +1526,7 @@ function paintSchedules() {
     const occ = occurrences(show, now, 21).filter(o => o.end > now);
     const current = occ.find(o => o.start <= now);
     const next = occ.find(o => o.start > now);
+    if (key === "live") NEXT_LIVE = { current, next };
     root.querySelector("[data-badge]").textContent = current ? "Live now" : "Off air";
     root.querySelector("[data-badge]").classList.toggle("on", !!current);
     const label = key === "live" ? "live show" : "radio show";
@@ -1513,7 +1560,8 @@ function paintSchedules() {
       });
     }
   });
-  const liveOn = document.querySelector("#ch-live [data-badge]").classList.contains("on");
+  const liveOn = PC.isLive() || (PC.kind() !== "vdo" && document.querySelector("#ch-live [data-badge]").classList.contains("on"));
+  PC.refresh();
   const pb = document.getElementById("playerBadge"); pb.textContent = liveOn ? "Live now" : "Off air"; pb.classList.toggle("on", liveOn);
   const anyLive = document.querySelector(".tune .badge.on");
   document.getElementById("navLive").classList.toggle("on", !!anyLive);
